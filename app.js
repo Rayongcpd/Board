@@ -185,7 +185,7 @@ function setupEventListeners() {
       const endYearVal = parseInt(document.getElementById("new-member-end").value, 10);
       const params = {
         cooperative_id: currentCoop,
-        member_id: document.getElementById("new-member-id").value.trim(),
+        member_id: document.getElementById("new-member-id").value.trim() || undefined,
         full_name: document.getElementById("new-member-name").value.trim(),
         position: document.getElementById("new-member-position").value,
         term_number: document.getElementById("new-member-term").value,
@@ -336,7 +336,7 @@ function fetchApi(action, params = {}) {
     .catch(err => {
       showSpinner(false);
       alert(`API Error: ${err.message}`);
-      return null;
+      throw err;
     });
 }
 
@@ -349,6 +349,18 @@ function loadBoardData(cooperativeId, year) {
   tableBody.innerHTML = "";
   
   fetchApi("getBoard", { cooperative_id: cooperativeId, year }).then(boardData => {
+    if (!boardData) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 6;
+      td.style.textAlign = "center";
+      td.textContent = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+      updateStats({ valid: 0, warning: 0, invalid: 0 });
+      return;
+    }
+    
     let boardStatus = [];
     let members = [];
     
@@ -467,7 +479,7 @@ function loadMemberData(memberId, cooperativeId, targetYear) {
     fetchApi("validate", { member_id: memberId, cooperative_id: cooperativeId, evaluation_date: `${targetYear - 543}-12-31` }),
     loadCooperatives()
   ]).then(([memberDetails, validation, coops]) => {
-    if (!memberDetails || !memberDetails.member) return;
+    if (!memberDetails || !memberDetails.member || !validation) return;
     
     const member = memberDetails.member;
     const records = memberDetails.term_records || [];
