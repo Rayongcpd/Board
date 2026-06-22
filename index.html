@@ -36,6 +36,68 @@
         </select>
       </div>
       <button class="btn" id="btn-refresh">รีเฟรชข้อมูล</button>
+      <button class="btn" id="btn-toggle-add-coop">เพิ่มสหกรณ์</button>
+    </section>
+
+    <!-- Add Cooperative Card (Hidden by default) -->
+    <section class="card" id="add-coop-card" style="display: none; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h2 class="card-title">➕ เพิ่มข้อมูลสหกรณ์</h2>
+      </div>
+      <form id="add-coop-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="form-group">
+          <label for="new-coop-id">รหัสสหกรณ์ (cooperative_id)</label>
+          <input type="text" id="new-coop-id" placeholder="ตัวอย่าง: coop-003" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-name">ชื่อสหกรณ์</label>
+          <input type="text" id="new-coop-name" placeholder="ตัวอย่าง: สหกรณ์ออมทรัพย์... จำกัด" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-type">ประเภทสหกรณ์</label>
+          <input type="text" id="new-coop-type" placeholder="ตัวอย่าง: ออมทรัพย์" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-reg">เลขทะเบียนสหกรณ์</label>
+          <input type="text" id="new-coop-reg" placeholder="ตัวอย่าง: ส.012345">
+        </div>
+        <div class="form-group">
+          <label for="new-coop-duration">ระยะเวลาวาระ (ปี)</label>
+          <input type="number" id="new-coop-duration" value="2" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-max-terms">จำนวนวาระติดต่อกันสูงสุด</label>
+          <input type="number" id="new-coop-max-terms" value="2" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-cooling">ระยะเวลาพักวาระ (จำนวนวาระ)</label>
+          <input type="number" id="new-coop-cooling" value="1" min="0" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-size">จำนวนกรรมการ (คน)</label>
+          <input type="number" id="new-coop-size" value="15" min="1" max="100" required>
+        </div>
+        <div class="form-group">
+          <label for="new-coop-fiscal-month">เดือนสิ้นสุดปีงบประมาณ</label>
+          <select id="new-coop-fiscal-month" required>
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11">พฤศจิกายน</option>
+            <option value="12" selected>ธันวาคม</option>
+          </select>
+        </div>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
+          <button type="submit" class="btn">บันทึกข้อมูลสหกรณ์</button>
+        </div>
+      </form>
     </section>
 
     <!-- Main Views Container -->

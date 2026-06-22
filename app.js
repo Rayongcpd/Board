@@ -8,6 +8,12 @@ const API_BASE = "https://script.google.com/macros/s/AKfycbx6TUKnPE5N_mUsgafTHH-
 // In-memory cache for API requests
 const apiCache = {};
 
+// In-memory mock cooperatives (global so it persists across calls in Mock mode)
+let mockCooperatives = [
+  { cooperative_id: "coop-001", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", registration_number: "ส.012345", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 },
+  { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 }
+];
+
 // --- SYSTEM INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   initSystemTime();
@@ -74,6 +80,59 @@ function setupEventListeners() {
   if (btnPrintMemo) {
     btnPrintMemo.addEventListener("click", () => {
       window.print();
+    });
+  }
+
+  const btnToggleAddCoop = document.getElementById("btn-toggle-add-coop");
+  const addCoopCard = document.getElementById("add-coop-card");
+  const addCoopForm = document.getElementById("add-coop-form");
+
+  if (btnToggleAddCoop && addCoopCard) {
+    btnToggleAddCoop.addEventListener("click", () => {
+      const isHidden = addCoopCard.style.display === "none";
+      addCoopCard.style.display = isHidden ? "block" : "none";
+      btnToggleAddCoop.textContent = isHidden ? "ปิดฟอร์ม" : "เพิ่มสหกรณ์";
+    });
+  }
+
+  if (addCoopForm) {
+    addCoopForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const params = {
+        cooperative_id: document.getElementById("new-coop-id").value.trim(),
+        name: document.getElementById("new-coop-name").value.trim(),
+        type: document.getElementById("new-coop-type").value.trim(),
+        registration_number: document.getElementById("new-coop-reg").value.trim(),
+        term_duration_years: document.getElementById("new-coop-duration").value,
+        max_consecutive_terms: document.getElementById("new-coop-max-terms").value,
+        cooling_off_terms: document.getElementById("new-coop-cooling").value,
+        board_size: document.getElementById("new-coop-size").value,
+        fiscal_year_end_month: document.getElementById("new-coop-fiscal-month").value
+      };
+
+      fetchApi("addCooperative", params).then(newCoop => {
+        if (newCoop) {
+          alert("เพิ่มข้อมูลสหกรณ์สำเร็จ!");
+          addCoopForm.reset();
+          addCoopCard.style.display = "none";
+          if (btnToggleAddCoop) {
+            btnToggleAddCoop.textContent = "เพิ่มสหกรณ์";
+          }
+          
+          // Clear API cache
+          for (const key in apiCache) delete apiCache[key];
+          
+          // Reload route to update dropdown list and select new coop
+          loadCooperatives().then(coops => {
+            populateCooperativeDropdown(coops, newCoop.cooperative_id);
+            const year = yearSelect.value;
+            window.location.hash = `#/board?coop=${encodeURIComponent(newCoop.cooperative_id)}&year=${encodeURIComponent(year)}`;
+          });
+        }
+      }).catch(err => {
+        alert(`เกิดข้อผิดพลาด: ${err.message}`);
+      });
     });
   }
 }
@@ -519,13 +578,24 @@ function showSpinner(show) {
 
 // --- MOCK DATA GENERATOR ---
 function getMockData(action, params) {
-  const mockCoops = [
-    { cooperative_id: "coop-001", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", registration_number: "ส.012345", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 },
-    { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 }
-  ];
-  
   if (action === "getCooperatives") {
-    return mockCoops;
+    return mockCooperatives;
+  }
+  
+  if (action === "addCooperative") {
+    const newCoop = {
+      cooperative_id: params.cooperative_id,
+      name: params.name,
+      type: params.type,
+      registration_number: params.registration_number,
+      term_duration_years: parseInt(params.term_duration_years, 10) || 2,
+      max_consecutive_terms: parseInt(params.max_consecutive_terms, 10) || 2,
+      cooling_off_terms: parseInt(params.cooling_off_terms, 10) || 1,
+      board_size: parseInt(params.board_size, 10) || 15,
+      fiscal_year_end_month: parseInt(params.fiscal_year_end_month, 10) || 12
+    };
+    mockCooperatives.push(newCoop);
+    return newCoop;
   }
   
   if (action === "getBoard") {
