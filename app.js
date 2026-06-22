@@ -682,9 +682,24 @@ function getMockData(action, params) {
   }
   
   if (action === "addMember") {
+    let memberId = params.member_id ? params.member_id.trim() : "";
+    if (!memberId) {
+      let maxNum = 0;
+      mockMembers.forEach(m => {
+        if (m.cooperative_id === params.cooperative_id) {
+          const match = m.member_id.match(/\d+/);
+          if (match) {
+            const num = parseInt(match[0], 10);
+            if (num > maxNum) maxNum = num;
+          }
+        }
+      });
+      memberId = "M-" + (maxNum + 1).toString().padStart(4, '0');
+    }
+
     const newMember = {
       cooperative_id: params.cooperative_id,
-      member_id: params.member_id,
+      member_id: memberId,
       full_name: params.full_name,
       position: params.position,
       membership_status: "active"
@@ -692,7 +707,7 @@ function getMockData(action, params) {
     
     const label = `${params.term_number}/${params.year_in_term}`;
     const newRecord = {
-      member_id: params.member_id,
+      member_id: memberId,
       cooperative_id: params.cooperative_id,
       term_number: parseInt(params.term_number, 10),
       year_in_term: parseInt(params.year_in_term, 10),
