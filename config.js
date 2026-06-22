@@ -6,7 +6,7 @@ const CONFIG = {
   API_BASE: "https://script.google.com/macros/s/AKfycbwLXJQ5AAKaxqzG-oNAacchVqxFFjspvu5po25spYg1VOxNSletJHo-g8j3xmfBFkLC/exec",
 
   // Content Security Policy
-  CSP: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src https://script.google.com; frame-src 'none'; object-src 'none';",
+  CSP: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;   connect-src https://script.google.com https://script.googleusercontent.com; frame-src 'none'; object-src 'none';",
 
   // App metadata
   APP_NAME: "ระบบตรวจสอบวาระกรรมการสหกรณ์",
