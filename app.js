@@ -54,31 +54,31 @@ const toast = {
 
 // In-memory mock cooperatives (global so it persists across calls in Mock mode)
 let mockCooperatives = [
-  { cooperative_id: "coop-001", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", registration_number: "ส.012345", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 4 },
-  { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 15 }
+  { cooperative_id: "ส.012345", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 4 },
+  { cooperative_id: "ส.054321", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 15 }
 ];
 
 let mockMembers = [
-  { member_id: "M-0042", cooperative_id: "coop-001", full_name: "นายสมชาย รักสหกรณ์", membership_status: "active" },
-  { member_id: "M-0088", cooperative_id: "coop-001", full_name: "นางใจดี มีสุข", membership_status: "active" },
-  { member_id: "M-0100", cooperative_id: "coop-001", full_name: "นายวีระ กล้าหาญ", membership_status: "active" },
-  { member_id: "M-0120", cooperative_id: "coop-001", full_name: "นางสาวสมหญิง ยิ่งรวย", membership_status: "active" }
+  { member_id: "M-0042", cooperative_id: "ส.012345", full_name: "นายสมชาย รักสหกรณ์", membership_status: "active" },
+  { member_id: "M-0088", cooperative_id: "ส.012345", full_name: "นางใจดี มีสุข", membership_status: "active" },
+  { member_id: "M-0100", cooperative_id: "ส.012345", full_name: "นายวีระ กล้าหาญ", membership_status: "active" },
+  { member_id: "M-0120", cooperative_id: "ส.012345", full_name: "นางสาวสมหญิง ยิ่งรวย", membership_status: "active" }
 ];
 
 let mockTermRecords = [
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
-  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
-  { member_id: "M-0120", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เหรัญญิก", is_by_election: false },
-  { member_id: "M-0120", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เหรัญญิก", is_by_election: false }
+  { member_id: "M-0042", cooperative_id: "ส.012345", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "ส.012345", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "ส.012345", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "ส.012345", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0088", cooperative_id: "ส.012345", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
+  { member_id: "M-0088", cooperative_id: "ส.012345", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "ส.012345", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "ส.012345", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "ส.012345", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "ส.012345", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "ส.012345", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0120", cooperative_id: "ส.012345", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เหรัญญิก", is_by_election: false },
+  { member_id: "M-0120", cooperative_id: "ส.012345", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เหรัญญิก", is_by_election: false }
 ];
 
 // --- SYSTEM INITIALIZATION ---
@@ -176,7 +176,6 @@ function setupEventListeners() {
         cooperative_id: document.getElementById("new-coop-id").value.trim(),
         name: document.getElementById("new-coop-name").value.trim(),
         type: document.getElementById("new-coop-type").value.trim(),
-        registration_number: document.getElementById("new-coop-reg").value.trim(),
         term_duration_years: document.getElementById("new-coop-duration").value,
         max_consecutive_terms: document.getElementById("new-coop-max-terms").value,
         cooling_off_terms: document.getElementById("new-coop-cooling").value,
@@ -826,7 +825,6 @@ function getMockData(action, params) {
       cooperative_id: params.cooperative_id,
       name: params.name,
       type: params.type,
-      registration_number: params.registration_number,
       term_duration_years: parseInt(params.term_duration_years, 10) || 2,
       max_consecutive_terms: parseInt(params.max_consecutive_terms, 10) || 2,
       cooling_off_terms: parseInt(params.cooling_off_terms, 10) || 1,
