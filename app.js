@@ -14,6 +14,26 @@ let mockCooperatives = [
   { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 }
 ];
 
+let mockMembers = [
+  { member_id: "M-0042", cooperative_id: "coop-001", full_name: "นายสมชาย รักสหกรณ์", position: "ประธานกรรมการ", membership_status: "active" },
+  { member_id: "M-0088", cooperative_id: "coop-001", full_name: "นางใจดี มีสุข", position: "เลขานุการ", membership_status: "active" },
+  { member_id: "M-0100", cooperative_id: "coop-001", full_name: "นายวีระ กล้าหาญ", position: "กรรมการ", membership_status: "active" }
+];
+
+let mockTermRecords = [
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
+  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
+  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true }
+];
+
 // --- SYSTEM INITIALIZATION ---
 document.addEventListener("DOMContentLoaded", () => {
   initSystemTime();
@@ -135,6 +155,60 @@ function setupEventListeners() {
       });
     });
   }
+
+  const btnToggleAddMember = document.getElementById("btn-toggle-add-member");
+  const addMemberCard = document.getElementById("add-member-card");
+  const addMemberForm = document.getElementById("add-member-form");
+
+  if (btnToggleAddMember && addMemberCard) {
+    btnToggleAddMember.addEventListener("click", () => {
+      const isHidden = addMemberCard.style.display === "none";
+      addMemberCard.style.display = isHidden ? "block" : "none";
+      btnToggleAddMember.textContent = isHidden ? "ปิดฟอร์ม" : "เพิ่มกรรมการ";
+    });
+  }
+
+  if (addMemberForm) {
+    addMemberForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const currentCoop = coopSelect.value;
+      if (!currentCoop) {
+        alert("กรุณาเลือกสหกรณ์ก่อนเพิ่มกรรมการ");
+        return;
+      }
+      
+      const params = {
+        cooperative_id: currentCoop,
+        member_id: document.getElementById("new-member-id").value.trim(),
+        full_name: document.getElementById("new-member-name").value.trim(),
+        position: document.getElementById("new-member-position").value,
+        term_number: document.getElementById("new-member-term").value,
+        year_in_term: document.getElementById("new-member-year-in-term").value,
+        period_start: document.getElementById("new-member-start").value,
+        period_end_expected: document.getElementById("new-member-end").value
+      };
+
+      fetchApi("addMember", params).then(result => {
+        if (result) {
+          alert("เพิ่มรายชื่อคณะกรรมการสำเร็จ!");
+          addMemberForm.reset();
+          addMemberCard.style.display = "none";
+          if (btnToggleAddMember) {
+            btnToggleAddMember.textContent = "เพิ่มกรรมการ";
+          }
+          
+          // Clear API cache
+          for (const key in apiCache) delete apiCache[key];
+          
+          // Reload board data
+          loadBoardData(currentCoop, yearSelect.value);
+        }
+      }).catch(err => {
+        alert(`เกิดข้อผิดพลาด: ${err.message}`);
+      });
+    });
+  }
 }
 
 // --- ROUTER & ROUTE HANDLERS ---
@@ -157,8 +231,17 @@ function handleRoute() {
         coopSelect.value = params.coop;
         yearSelect.value = params.year;
         loadBoardData(params.coop, params.year);
+        const btnToggleAddMem = document.getElementById("btn-toggle-add-member");
+        if (btnToggleAddMem) btnToggleAddMem.style.display = "inline-block";
       } else {
         renderEmptyBoard();
+        const btnToggleAddMem = document.getElementById("btn-toggle-add-member");
+        const addMemCard = document.getElementById("add-member-card");
+        if (btnToggleAddMem) {
+          btnToggleAddMem.style.display = "none";
+          btnToggleAddMem.textContent = "เพิ่มกรรมการ";
+        }
+        if (addMemCard) addMemCard.style.display = "none";
       }
     } else if (route === "#/member") {
       viewBoard.style.display = "none";
@@ -598,96 +681,113 @@ function getMockData(action, params) {
     return newCoop;
   }
   
+  if (action === "addMember") {
+    const newMember = {
+      cooperative_id: params.cooperative_id,
+      member_id: params.member_id,
+      full_name: params.full_name,
+      position: params.position,
+      membership_status: "active"
+    };
+    
+    const label = `${params.term_number}/${params.year_in_term}`;
+    const newRecord = {
+      member_id: params.member_id,
+      cooperative_id: params.cooperative_id,
+      term_number: parseInt(params.term_number, 10),
+      year_in_term: parseInt(params.year_in_term, 10),
+      label: label,
+      period_start: params.period_start,
+      period_end_expected: params.period_end_expected,
+      elected: true
+    };
+    
+    mockMembers.push(newMember);
+    mockTermRecords.push(newRecord);
+    return { member: newMember, term_record: newRecord };
+  }
+  
   if (action === "getBoard") {
-    return [
-      { member_id: "M-0042", full_name: "นายสมชาย รักสหกรณ์", position: "ประธานกรรมการ", current_label: "2/2", status: "warning", summary: "มีข้อควรระวัง: กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้" },
-      { member_id: "M-0088", full_name: "นางใจดี มีสุข", position: "เลขานุการ", current_label: "1/2", status: "valid", summary: "การดำรงตำแหน่งปกติถูกต้องในวาระ 1/2" },
-      { member_id: "M-0100", full_name: "นายวีระ กล้าหาญ", position: "กรรมการ", current_label: "3/1", status: "invalid", summary: "ตรวจพบเงื่อนไขไม่ถูกต้อง: ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)" }
-    ];
+    const coopId = params.cooperative_id;
+    const targetYear = parseInt(params.year, 10);
+    const targetYearInt = targetYear > 2400 ? targetYear - 543 : targetYear;
+    
+    const coopMembers = mockMembers.filter(m => m.cooperative_id === coopId);
+    const results = [];
+    
+    coopMembers.forEach(member => {
+      const records = mockTermRecords.filter(r => r.member_id === member.member_id && r.cooperative_id === coopId);
+      const activeRecord = records.find(r => {
+        if (!r.elected) return false;
+        const startYear = new Date(r.period_start).getFullYear();
+        const endYear = new Date(r.period_end_expected).getFullYear();
+        return (targetYearInt >= startYear && targetYearInt <= endYear);
+      });
+      
+      if (activeRecord) {
+        let status = "valid";
+        let summary = `การดำรงตำแหน่งปกติถูกต้องในวาระ ${activeRecord.label}`;
+        
+        if (member.member_id === "M-0042") {
+          status = "warning";
+          summary = "มีข้อควรระวัง: กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้";
+        } else if (member.member_id === "M-0100") {
+          status = "invalid";
+          summary = "ตรวจพบเงื่อนไขไม่ถูกต้อง: ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)";
+        }
+        
+        results.push({
+          member_id: member.member_id,
+          full_name: member.full_name,
+          position: activeRecord.position || member.position,
+          current_label: activeRecord.label,
+          status: status,
+          summary: summary
+        });
+      }
+    });
+    return results;
   }
   
   if (action === "getMember") {
-    if (params.member_id === "M-0042") {
-      return {
-        member: { member_id: "M-0042", cooperative_id: "coop-001", full_name: "นายสมชาย รักสหกรณ์", position: "ประธานกรรมการ", membership_status: "active" },
-        term_records: [
-          { member_id: "M-0042", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, exit_reason: null },
-          { member_id: "M-0042", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, exit_reason: null },
-          { member_id: "M-0042", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, exit_reason: null },
-          { member_id: "M-0042", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, exit_reason: null }
-        ]
-      };
-    }
-    if (params.member_id === "M-0088") {
-      return {
-        member: { member_id: "M-0088", cooperative_id: "coop-001", full_name: "นางใจดี มีสุข", position: "เลขานุการ", membership_status: "active" },
-        term_records: [
-          { member_id: "M-0088", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
-          { member_id: "M-0088", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true }
-        ]
-      };
-    }
+    const member = mockMembers.find(m => m.member_id === params.member_id && m.cooperative_id === params.cooperative_id);
+    const records = mockTermRecords.filter(r => r.member_id === params.member_id && r.cooperative_id === params.cooperative_id);
     return {
-      member: { member_id: "M-0100", cooperative_id: "coop-001", full_name: "นายวีระ กล้าหาญ", position: "กรรมการ", membership_status: "active" },
-      term_records: [
-        { member_id: "M-0100", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true },
-        { member_id: "M-0100", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true },
-        { member_id: "M-0100", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
-        { member_id: "M-0100", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
-        { member_id: "M-0100", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true }
-      ]
+      member: member || null,
+      term_records: records.sort((a, b) => new Date(a.period_start).getTime() - new Date(b.period_start).getTime())
     };
   }
   
   if (action === "validate") {
+    const member = mockMembers.find(m => m.member_id === params.member_id && m.cooperative_id === params.cooperative_id);
+    const records = mockTermRecords.filter(r => r.member_id === params.member_id && r.cooperative_id === params.cooperative_id);
+    
+    let status = "valid";
+    let summary = "ดำรงตำแหน่งถูกต้องตามข้อบังคับ";
+    let recommendation = "ดำรงตำแหน่งต่อไปจนครบกำหนดวาระปกติ";
+    let rules = [
+      { id: "R-01", passed: true, detail: "ดำรงตำแหน่งต่อเนื่องไม่เกินกำหนด" },
+      { id: "R-02", passed: true, detail: "ลำดับปีในวาระถูกต้อง" },
+      { id: "R-03", passed: true, detail: "ไม่มีการข้ามปีกลางวาระ" },
+      { id: "R-04", passed: true, detail: "ยังคงสมาชิกภาพอยู่" },
+      { id: "R-05", passed: true, detail: "เคารพการเว้นวรรค (Cooling-off) ถูกต้อง" },
+      { id: "R-06", passed: true, detail: "วาระยังไม่หมดอายุ" }
+    ];
+    let warnings = [];
+
     if (params.member_id === "M-0042") {
-      return {
-        status: "warning",
-        rules: [
-          { id: "R-01", passed: true, detail: "ดำรงตำแหน่งต่อเนื่องไม่เกินกำหนด" },
-          { id: "R-02", passed: true, detail: "ลำดับปีในวาระถูกต้อง" },
-          { id: "R-03", passed: true, detail: "ไม่มีการข้ามปีกลางวาระ" },
-          { id: "R-04", passed: true, detail: "ยังคงสมาชิกภาพอยู่" },
-          { id: "R-05", passed: true, detail: "เคารพการเว้นวรรค (Cooling-off) ถูกต้อง" },
-          { id: "R-06", passed: true, detail: "วาระยังไม่หมดอายุ" }
-        ],
-        warnings: [
-          { id: "W-01", detail: "กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้" }
-        ],
-        summary: "มีข้อควรระวัง: กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้",
-        recommendation: "หากต้องการดำรงตำแหน่งต่อในอนาคต ต้องพัก 2 ปีหลังสิ้นวาระนี้"
-      };
+      status = "warning";
+      summary = "มีข้อควรระวัง: กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้";
+      recommendation = "หากต้องการดำรงตำแหน่งต่อในอนาคต ต้องพัก 2 ปีหลังสิ้นวาระนี้";
+      warnings.push({ id: "W-01", detail: "กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้" });
+    } else if (params.member_id === "M-0100") {
+      status = "invalid";
+      summary = "ตรวจพบเงื่อนไขไม่ถูกต้อง: ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)";
+      recommendation = "ควรตรวจสอบประวัติการดำรงตำแหน่งหรือการแต่งตั้งตามพ.ร.บ. สหกรณ์";
+      rules[0] = { id: "R-01", passed: false, detail: "ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)" };
     }
-    if (params.member_id === "M-0088") {
-      return {
-        status: "valid",
-        rules: [
-          { id: "R-01", passed: true, detail: "ดำรงตำแหน่งต่อเนื่องไม่เกินกำหนด" },
-          { id: "R-02", passed: true, detail: "ลำดับปีในวาระถูกต้อง" },
-          { id: "R-03", passed: true, detail: "ไม่มีการข้ามปีกลางวาระ" },
-          { id: "R-04", passed: true, detail: "ยังคงสมาชิกภาพอยู่" },
-          { id: "R-05", passed: true, detail: "เคารพการเว้นวรรค (Cooling-off) ถูกต้อง" },
-          { id: "R-06", passed: true, detail: "วาระยังไม่หมดอายุ" }
-        ],
-        warnings: [],
-        summary: "การดำรงตำแหน่งปกติถูกต้องในวาระ 1/2",
-        recommendation: "ดำรงตำแหน่งต่อไปจนครบกำหนดวาระปกติ"
-      };
-    }
-    return {
-      status: "invalid",
-      rules: [
-        { id: "R-01", passed: false, detail: "ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)" },
-        { id: "R-02", passed: true, detail: "ลำดับปีในวาระถูกต้อง" },
-        { id: "R-03", passed: true, detail: "ไม่มีการข้ามปีกลางวาระ" },
-        { id: "R-04", passed: true, detail: "ยังคงสมาชิกภาพอยู่" },
-        { id: "R-05", passed: true, detail: "เคารพการเว้นวรรค (Cooling-off) ถูกต้อง" },
-        { id: "R-06", passed: true, detail: "วาระยังไม่หมดอายุ" }
-      ],
-      warnings: [],
-      summary: "ตรวจพบเงื่อนไขไม่ถูกต้อง: ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)",
-      recommendation: "ควรตรวจสอบประวัติการดำรงตำแหน่งหรือการแต่งตั้งตามพ.ร.บ. สหกรณ์"
-    };
+
+    return { status, rules, warnings, summary, recommendation };
   }
   
   return null;

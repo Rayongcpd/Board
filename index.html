@@ -120,11 +120,60 @@
           </div>
         </div>
 
+        <!-- Add Member Card (Hidden by default) -->
+        <section class="card" id="add-member-card" style="display: none; margin-bottom: 2rem;">
+          <div class="card-header">
+            <h2 class="card-title">👤 เพิ่มรายชื่อคณะกรรมการ</h2>
+          </div>
+          <form id="add-member-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="form-group">
+              <label for="new-member-id">รหัสสมาชิก/ทะเบียนสมาชิก (member_id)</label>
+              <input type="text" id="new-member-id" placeholder="ตัวอย่าง: M-0001" required>
+            </div>
+            <div class="form-group">
+              <label for="new-member-name">ชื่อ-นามสกุล</label>
+              <input type="text" id="new-member-name" placeholder="ตัวอย่าง: นายสมหมาย มีสุข" required>
+            </div>
+            <div class="form-group">
+              <label for="new-member-position">ตำแหน่ง</label>
+              <select id="new-member-position" required>
+                <option value="ประธานกรรมการ">ประธานกรรมการ</option>
+                <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
+                <option value="เลขานุการ">เลขานุการ</option>
+                <option value="เหรัญญิก">เหรัญญิก</option>
+                <option value="กรรมการ">กรรมการ</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="new-member-term">วาระที่ (term_number)</label>
+              <input type="number" id="new-member-term" value="1" min="1" max="20" required>
+            </div>
+            <div class="form-group">
+              <label for="new-member-year-in-term">ปีในวาระ (year_in_term)</label>
+              <input type="number" id="new-member-year-in-term" value="1" min="1" max="10" required>
+            </div>
+            <div class="form-group">
+              <label for="new-member-start">วันที่เริ่มวาระ</label>
+              <input type="date" id="new-member-start" required>
+            </div>
+            <div class="form-group">
+              <label for="new-member-end">วันที่สิ้นสุดวาระ (คาดการณ์)</label>
+              <input type="date" id="new-member-end" required>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
+              <button type="submit" class="btn">บันทึกรายชื่อกรรมการ</button>
+            </div>
+          </form>
+        </section>
+
         <!-- Board Table Card -->
         <div class="card" id="board-table-card">
           <div class="card-header">
             <h2 class="card-title">รายชื่อคณะกรรมการสหกรณ์</h2>
-            <span class="detail-label" id="board-title-label"></span>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+              <span class="detail-label" id="board-title-label"></span>
+              <button class="btn" id="btn-toggle-add-member" style="display: none; padding: 0.3rem 1rem; font-size: 0.8rem; align-self: center;">เพิ่มกรรมการ</button>
+            </div>
           </div>
           <div style="overflow-x: auto;">
             <table id="board-table">
