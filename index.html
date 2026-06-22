@@ -153,12 +153,12 @@
               <input type="number" id="new-member-year-in-term" value="1" min="1" max="10" required>
             </div>
             <div class="form-group">
-              <label for="new-member-start">วันที่เริ่มวาระ</label>
-              <input type="date" id="new-member-start" required>
+              <label for="new-member-start">ปีที่เริ่มวาระ (พ.ศ.)</label>
+              <input type="number" id="new-member-start" min="2400" max="2700" placeholder="ตัวอย่าง: 2567" required>
             </div>
             <div class="form-group">
-              <label for="new-member-end">วันที่สิ้นสุดวาระ (คาดการณ์)</label>
-              <input type="date" id="new-member-end" required>
+              <label for="new-member-end">ปีที่สิ้นสุดวาระ (คาดการณ์) (พ.ศ.)</label>
+              <input type="number" id="new-member-end" min="2400" max="2700" placeholder="ตัวอย่าง: 2568" required>
             </div>
             <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
               <input type="checkbox" id="new-member-by-election" style="width: auto; height: 18px; cursor: pointer;">
@@ -166,7 +166,7 @@
             </div>
             <div class="form-group" style="grid-column: 1 / -1; margin-top: -0.5rem; margin-bottom: 0.5rem;">
               <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; line-height: 1.4;">
-                💡 *หมายเหตุ: วันเริ่มวาระและสิ้นสุดวาระสามารถปรับเปลี่ยนได้ตามวันที่มีการประชุมใหญ่สามัญประจำปี (AGM) จริงในแต่ละปี (ระบบคำนวณวันสิ้นสุดวาระให้เป็นค่าเริ่มต้นเท่านั้น)*
+                💡 *หมายเหตุ: ปีเริ่มวาระและปีสิ้นสุดวาระสามารถปรับเปลี่ยนได้ตามปีจริงของแต่ละวาระ (ระบบคำนวณปีสิ้นสุดวาระให้เป็นค่าเริ่มต้นเท่านั้น)*
               </small>
             </div>
             <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">

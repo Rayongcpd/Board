@@ -181,6 +181,8 @@ function setupEventListeners() {
         return;
       }
       
+      const startYearVal = parseInt(document.getElementById("new-member-start").value, 10);
+      const endYearVal = parseInt(document.getElementById("new-member-end").value, 10);
       const params = {
         cooperative_id: currentCoop,
         member_id: document.getElementById("new-member-id").value.trim(),
@@ -188,8 +190,8 @@ function setupEventListeners() {
         position: document.getElementById("new-member-position").value,
         term_number: document.getElementById("new-member-term").value,
         year_in_term: document.getElementById("new-member-year-in-term").value,
-        period_start: document.getElementById("new-member-start").value,
-        period_end_expected: document.getElementById("new-member-end").value,
+        period_start: isNaN(startYearVal) ? "" : `${startYearVal - 543}-01-01`,
+        period_end_expected: isNaN(endYearVal) ? "" : `${endYearVal - 543}-12-31`,
         is_by_election: document.getElementById("new-member-by-election").checked
       };
 
@@ -220,8 +222,8 @@ function setupEventListeners() {
   
   if (newMemberStart && newMemberEnd) {
     newMemberStart.addEventListener("change", () => {
-      const startDateVal = newMemberStart.value;
-      if (!startDateVal) return;
+      const startYearVal = parseInt(newMemberStart.value, 10);
+      if (isNaN(startYearVal)) return;
       
       const selectedCoopId = coopSelect.value;
       if (!selectedCoopId) return;
@@ -230,17 +232,7 @@ function setupEventListeners() {
         const coop = coops.find(c => String(c.cooperative_id) === String(selectedCoopId));
         if (coop && coop.term_duration_years) {
           const durationYears = parseInt(coop.term_duration_years, 10);
-          const startDate = new Date(startDateVal);
-          if (!isNaN(startDate.getTime())) {
-            const endDate = new Date(startDate);
-            endDate.setFullYear(startDate.getFullYear() + durationYears);
-            endDate.setDate(endDate.getDate() - 1);
-            
-            const yyyy = endDate.getFullYear();
-            const mm = String(endDate.getMonth() + 1).padStart(2, '0');
-            const dd = String(endDate.getDate()).padStart(2, '0');
-            newMemberEnd.value = `${yyyy}-${mm}-${dd}`;
-          }
+          newMemberEnd.value = startYearVal + durationYears - 1;
         }
       });
     });
