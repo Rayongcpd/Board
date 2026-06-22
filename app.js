@@ -10,28 +10,31 @@ const apiCache = {};
 
 // In-memory mock cooperatives (global so it persists across calls in Mock mode)
 let mockCooperatives = [
-  { cooperative_id: "coop-001", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", registration_number: "ส.012345", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 },
-  { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1 }
+  { cooperative_id: "coop-001", name: "สหกรณ์ออมทรัพย์ครู ระยอง จำกัด", type: "ออมทรัพย์", registration_number: "ส.012345", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 4 },
+  { cooperative_id: "coop-002", name: "สหกรณ์การเกษตรแกลง จำกัด", type: "การเกษตร", registration_number: "ส.054321", term_duration_years: 2, max_consecutive_terms: 2, cooling_off_terms: 1, board_size: 15 }
 ];
 
 let mockMembers = [
-  { member_id: "M-0042", cooperative_id: "coop-001", full_name: "นายสมชาย รักสหกรณ์", position: "ประธานกรรมการ", membership_status: "active" },
-  { member_id: "M-0088", cooperative_id: "coop-001", full_name: "นางใจดี มีสุข", position: "เลขานุการ", membership_status: "active" },
-  { member_id: "M-0100", cooperative_id: "coop-001", full_name: "นายวีระ กล้าหาญ", position: "กรรมการ", membership_status: "active" }
+  { member_id: "M-0042", cooperative_id: "coop-001", full_name: "นายสมชาย รักสหกรณ์", membership_status: "active" },
+  { member_id: "M-0088", cooperative_id: "coop-001", full_name: "นางใจดี มีสุข", membership_status: "active" },
+  { member_id: "M-0100", cooperative_id: "coop-001", full_name: "นายวีระ กล้าหาญ", membership_status: "active" },
+  { member_id: "M-0120", cooperative_id: "coop-001", full_name: "นางสาวสมหญิง ยิ่งรวย", membership_status: "active" }
 ];
 
 let mockTermRecords = [
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
-  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
-  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
-  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true },
-  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true }
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0042", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "ประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
+  { member_id: "M-0088", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เลขานุการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2022-01-01", period_end_expected: "2022-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2023-01-01", period_end_expected: "2023-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 1, label: "2/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 2, year_in_term: 2, label: "2/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0100", cooperative_id: "coop-001", term_number: 3, year_in_term: 1, label: "3/1", period_start: "2026-01-01", period_end_expected: "2026-12-31", elected: true, position: "รองประธานกรรมการ", is_by_election: false },
+  { member_id: "M-0120", cooperative_id: "coop-001", term_number: 1, year_in_term: 1, label: "1/1", period_start: "2024-01-01", period_end_expected: "2024-12-31", elected: true, position: "เหรัญญิก", is_by_election: false },
+  { member_id: "M-0120", cooperative_id: "coop-001", term_number: 1, year_in_term: 2, label: "1/2", period_start: "2025-01-01", period_end_expected: "2025-12-31", elected: true, position: "เหรัญญิก", is_by_election: false }
 ];
 
 // --- SYSTEM INITIALIZATION ---
@@ -186,13 +189,15 @@ function setupEventListeners() {
         term_number: document.getElementById("new-member-term").value,
         year_in_term: document.getElementById("new-member-year-in-term").value,
         period_start: document.getElementById("new-member-start").value,
-        period_end_expected: document.getElementById("new-member-end").value
+        period_end_expected: document.getElementById("new-member-end").value,
+        is_by_election: document.getElementById("new-member-by-election").checked
       };
 
       fetchApi("addMember", params).then(result => {
         if (result) {
           alert("เพิ่มรายชื่อคณะกรรมการสำเร็จ!");
           addMemberForm.reset();
+          document.getElementById("new-member-by-election").checked = false;
           addMemberCard.style.display = "none";
           if (btnToggleAddMember) {
             btnToggleAddMember.textContent = "เพิ่มกรรมการ";
@@ -351,8 +356,55 @@ function loadBoardData(cooperativeId, year) {
   const tableBody = document.getElementById("board-table-body");
   tableBody.innerHTML = "";
   
-  fetchApi("getBoard", { cooperative_id: cooperativeId, year }).then(board => {
-    if (!board || board.length === 0) {
+  fetchApi("getBoard", { cooperative_id: cooperativeId, year }).then(boardData => {
+    let boardStatus = [];
+    let members = [];
+    
+    if (boardData && boardData.members) {
+      members = boardData.members;
+      boardStatus = boardData.board_status || [];
+    } else if (Array.isArray(boardData)) {
+      members = boardData;
+    }
+
+    // Handle board-level validations UI
+    const boardValidationCard = document.getElementById("board-validation-card");
+    const boardRulesList = document.getElementById("board-rules-list");
+    
+    if (boardRulesList) boardRulesList.innerHTML = "";
+    
+    if (boardStatus && boardStatus.length > 0) {
+      if (boardValidationCard) boardValidationCard.style.display = "block";
+      boardStatus.forEach(rule => {
+        const item = document.createElement("div");
+        item.className = `rule-item ${rule.passed ? "passed" : "failed"}`;
+        
+        const icon = document.createElement("div");
+        icon.className = "rule-icon";
+        icon.textContent = rule.passed ? "✅" : "❌";
+        
+        const info = document.createElement("div");
+        info.className = "rule-info";
+        
+        const code = document.createElement("div");
+        code.className = "rule-code";
+        code.textContent = `${rule.id} · ${rule.passed ? "PASSED" : "FAILED"}`;
+        
+        const desc = document.createElement("div");
+        desc.className = "rule-desc";
+        desc.textContent = rule.detail;
+        
+        info.appendChild(code);
+        info.appendChild(desc);
+        item.appendChild(icon);
+        item.appendChild(info);
+        boardRulesList.appendChild(item);
+      });
+    } else {
+      if (boardValidationCard) boardValidationCard.style.display = "none";
+    }
+
+    if (!members || members.length === 0) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
       td.colSpan = 6;
@@ -366,7 +418,7 @@ function loadBoardData(cooperativeId, year) {
     
     let stats = { valid: 0, warning: 0, invalid: 0 };
     
-    board.forEach(member => {
+    members.forEach(member => {
       stats[member.status]++;
       
       const tr = document.createElement("tr");
@@ -430,8 +482,11 @@ function loadMemberData(memberId, cooperativeId, targetYear) {
     const coop = coops.find(c => c.cooperative_id === cooperativeId) || {};
     
     // Render Profile UI
+    const currentRecord = records[records.length - 1];
+    const currentPosition = currentRecord ? currentRecord.position : "-";
+
     document.getElementById("detail-full-name").textContent = member.full_name;
-    document.getElementById("detail-position").textContent = member.position;
+    document.getElementById("detail-position").textContent = currentPosition;
     document.getElementById("detail-member-id").textContent = member.member_id;
     document.getElementById("detail-status").textContent = member.membership_status === "active" ? "ยังคงสมาชิกภาพอยู่ (Active)" : "สิ้นสุดสมาชิกภาพ (Inactive)";
     
@@ -607,9 +662,9 @@ function populatePrintMemo(member, coop, records, validation, targetYear) {
   document.getElementById("print-member-name").textContent = member.full_name;
   document.getElementById("print-member-id-val").textContent = member.member_id;
   document.getElementById("print-coop-name").textContent = coop.name || "-";
-  document.getElementById("print-member-position").textContent = member.position;
   
   const currentRecord = records[records.length - 1];
+  document.getElementById("print-member-position").textContent = currentRecord ? currentRecord.position : "-";
   document.getElementById("print-member-label").textContent = currentRecord ? currentRecord.label : "-";
   document.getElementById("print-member-status").textContent = member.membership_status === "active" ? "เป็นสมาชิก" : "พ้นสมาชิกภาพ";
   
@@ -732,7 +787,6 @@ function getMockData(action, params) {
       cooperative_id: params.cooperative_id,
       member_id: memberId,
       full_name: params.full_name,
-      position: params.position,
       membership_status: "active"
     };
     
@@ -743,6 +797,8 @@ function getMockData(action, params) {
       term_number: parseInt(params.term_number, 10),
       year_in_term: parseInt(params.year_in_term, 10),
       label: label,
+      position: params.position,
+      is_by_election: (params.is_by_election === true || params.is_by_election === "true" || params.is_by_election === "TRUE"),
       period_start: params.period_start,
       period_end_expected: params.period_end_expected,
       elected: true
@@ -757,6 +813,9 @@ function getMockData(action, params) {
     const coopId = params.cooperative_id;
     const targetYear = parseInt(params.year, 10);
     const targetYearInt = targetYear > 2400 ? targetYear - 543 : targetYear;
+    
+    const coopConf = mockCooperatives.find(c => String(c.cooperative_id) === String(coopId));
+    const expectedSize = coopConf ? (parseInt(coopConf.board_size, 10) || 3) : 3;
     
     const coopMembers = mockMembers.filter(m => m.cooperative_id === coopId);
     const results = [];
@@ -785,14 +844,67 @@ function getMockData(action, params) {
         results.push({
           member_id: member.member_id,
           full_name: member.full_name,
-          position: activeRecord.position || member.position,
+          position: activeRecord.position || "",
           current_label: activeRecord.label,
           status: status,
           summary: summary
         });
       }
     });
-    return results;
+
+    const actualSize = results.length;
+    const boardStatus = [
+      {
+        id: "B-01",
+        passed: actualSize === expectedSize,
+        detail: actualSize === expectedSize 
+          ? `จำนวนกรรมการจริง (${actualSize} คน) ตรงตามข้อบังคับสหกรณ์ (${expectedSize} คน)`
+          : `จำนวนกรรมการจริง (${actualSize} คน) ไม่ตรงกับข้อบังคับ (${expectedSize} คน)`
+      }
+    ];
+
+    let numPresident = 0;
+    let numVicePresident = 0;
+    let numSecretary = 0;
+    let numTreasurer = 0;
+
+    results.forEach(m => {
+      const pos = (m.position || "").toString().trim();
+      if (pos.indexOf("ประธาน") !== -1 && pos.indexOf("รอง") === -1) {
+        numPresident++;
+      } else if (pos.indexOf("รองประธาน") !== -1) {
+        numVicePresident++;
+      } else if (pos.indexOf("เลขานุการ") !== -1 || pos === "เลขา" || pos === "เลขาฯ") {
+        numSecretary++;
+      } else if (pos.indexOf("เหรัญญิก") !== -1) {
+        numTreasurer++;
+      }
+    });
+
+    const b02Passed = (numPresident === 1 && numSecretary === 1 && numTreasurer === 1 && numVicePresident >= 1);
+    if (b02Passed) {
+      boardStatus.push({
+        id: "B-02",
+        passed: true,
+        detail: "ตำแหน่งบังคับครบถ้วนและถูกต้อง (ประธาน 1, รองประธานอย่างน้อย 1, เลขานุการ 1, เหรัญญิก 1)"
+      });
+    } else {
+      let missingOrDup = [];
+      if (numPresident !== 1) missingOrDup.push(`ประธาน (${numPresident})`);
+      if (numVicePresident < 1) missingOrDup.push(`รองประธาน (${numVicePresident})`);
+      if (numSecretary !== 1) missingOrDup.push(`เลขานุการ (${numSecretary})`);
+      if (numTreasurer !== 1) missingOrDup.push(`เหรัญญิก (${numTreasurer})`);
+      boardStatus.push({
+        id: "B-02",
+        passed: false,
+        detail: `ขาดหรือซ้ำซ้อนตำแหน่งหน้าที่บังคับ: ${missingOrDup.join(", ")}`
+      });
+    }
+
+    return {
+      board_status: boardStatus,
+      members: results
+    };
   }
   
   if (action === "getMember") {
