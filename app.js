@@ -213,15 +213,6 @@ function setupEventListeners() {
       });
     });
   }
-      }).catch(err => {
-        toast.error(`เกิดข้อมูลผิดพลาด: ${err.message}`);
-      });
-        }
-      }).catch(err => {
-        alert(`เกิดข้อผิดพลาด: ${err.message}`);
-      });
-    });
-  }
 
   const btnToggleAddMember = document.getElementById("btn-toggle-add-member");
   const addMemberCard = document.getElementById("add-member-card");
