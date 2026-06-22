@@ -209,6 +209,37 @@ function setupEventListeners() {
       });
     });
   }
+
+  const newMemberStart = document.getElementById("new-member-start");
+  const newMemberEnd = document.getElementById("new-member-end");
+  
+  if (newMemberStart && newMemberEnd) {
+    newMemberStart.addEventListener("change", () => {
+      const startDateVal = newMemberStart.value;
+      if (!startDateVal) return;
+      
+      const selectedCoopId = coopSelect.value;
+      if (!selectedCoopId) return;
+      
+      loadCooperatives().then(coops => {
+        const coop = coops.find(c => String(c.cooperative_id) === String(selectedCoopId));
+        if (coop && coop.term_duration_years) {
+          const durationYears = parseInt(coop.term_duration_years, 10);
+          const startDate = new Date(startDateVal);
+          if (!isNaN(startDate.getTime())) {
+            const endDate = new Date(startDate);
+            endDate.setFullYear(startDate.getFullYear() + durationYears);
+            endDate.setDate(endDate.getDate() - 1);
+            
+            const yyyy = endDate.getFullYear();
+            const mm = String(endDate.getMonth() + 1).padStart(2, '0');
+            const dd = String(endDate.getDate()).padStart(2, '0');
+            newMemberEnd.value = `${yyyy}-${mm}-${dd}`;
+          }
+        }
+      });
+    });
+  }
 }
 
 // --- ROUTER & ROUTE HANDLERS ---
