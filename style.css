@@ -535,6 +535,66 @@ tbody tr:hover {
   .badge.invalid { color: #000000 !important; }
 }
 
+/* Toast notifications */
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  padding: 0.8rem 1.2rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 400px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-info {
+  background-color: #1a3a5c;
+  border: 1px solid #2d5f8a;
+  color: #7ab3e0;
+}
+
+.toast-success {
+  background-color: #1a3c2a;
+  border: 1px solid #2d7a4a;
+  color: #5cd08a;
+}
+
+.toast-error {
+  background-color: #3c1a1a;
+  border: 1px solid #7a2d2d;
+  color: #d05c5c;
+}
+
+.toast-warning {
+  background-color: #3c3a1a;
+  border: 1px solid #7a722d;
+  color: #d0c05c;
+}
+
+/* Disabled button state */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 /* Hidden by default, visible in print */
 .print-memo {
   display: none;

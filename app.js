@@ -2,11 +2,55 @@
 // Fallback mock data allows instant local previews if GAS API_BASE is not configured.
 
 // --- CONFIGURATION ---
-// Replace with your Google Apps Script Web App Deployment URL
-const API_BASE = "https://script.google.com/macros/s/AKfycbx6TUKnPE5N_mUsgafTHH-6-z3SaizfpbUkAGQY1fmw0deUTaY1nozIsKhnSX1JzUj8/exec";
+// Use centralized config from config.js
+const API_BASE = CONFIG.API_BASE;
 
 // In-memory cache for API requests
 const apiCache = {};
+
+// Toast notification system
+const toastContainer = {
+  _queue: [],
+  _visible: 0,
+
+  show(message, type = "info", duration = null) {
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.display = "none";
+    document.body.appendChild(toast);
+
+    const dur = duration || CONFIG.TOAST_DURATION_MS;
+
+    requestAnimationFrame(() => {
+      toast.style.display = "flex";
+      this._visible++;
+    });
+
+    setTimeout(() => {
+      toast.style.display = "none";
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+        this._visible--;
+        this._processQueue();
+      }, 300);
+    }, dur);
+  },
+
+  _processQueue() {
+    if (this._queue.length > 0 && this._visible < CONFIG.TOAST_MAX_VISIBLE) {
+      const next = this._queue.shift();
+      this.show(next.message, next.type, next.duration);
+    }
+  },
+
+  info(msg, dur) { this.show(msg, "info", dur); },
+  success(msg, dur) { this.show(msg, "success", dur); },
+  error(msg, dur) { this.show(msg, "error", dur); },
+  warn(msg, dur) { this.show(msg, "warning", dur); }
+};
 
 // In-memory mock cooperatives (global so it persists across calls in Mock mode)
 let mockCooperatives = [
@@ -122,6 +166,12 @@ function setupEventListeners() {
     addCoopForm.addEventListener("submit", (e) => {
       e.preventDefault();
       
+      const submitBtn = addCoopForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
       const params = {
         cooperative_id: document.getElementById("new-coop-id").value.trim(),
         name: document.getElementById("new-coop-name").value.trim(),
@@ -136,11 +186,11 @@ function setupEventListeners() {
 
       fetchApi("addCooperative", params).then(newCoop => {
         if (newCoop) {
-          alert("เพิ่มข้อมูลสหกรณ์สำเร็จ!");
+          toast.success("เพิ่่มข้อมูลสหกรณ์สำเร็จ!");
           addCoopForm.reset();
           addCoopCard.style.display = "none";
           if (btnToggleAddCoop) {
-            btnToggleAddCoop.textContent = "เพิ่มสหกรณ์";
+            btnToggleAddCoop.textContent = "เพิ่่มสหกรณ์";
           }
           
           // Clear API cache
@@ -152,6 +202,20 @@ function setupEventListeners() {
             const year = yearSelect.value;
             window.location.hash = `#/board?coop=${encodeURIComponent(newCoop.cooperative_id)}&year=${encodeURIComponent(year)}`;
           });
+        }
+      }).catch(err => {
+        toast.error(`เกิดข้อมูลผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึ่ข้อมูลสหกรณ์";
+        }
+      });
+    });
+  }
+      }).catch(err => {
+        toast.error(`เกิดข้อมูลผิดพลาด: ${err.message}`);
+      });
         }
       }).catch(err => {
         alert(`เกิดข้อผิดพลาด: ${err.message}`);
@@ -175,6 +239,12 @@ function setupEventListeners() {
     addMemberForm.addEventListener("submit", (e) => {
       e.preventDefault();
       
+      const submitBtn = addMemberForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
       const currentCoop = coopSelect.value;
       if (!currentCoop) {
         alert("กรุณาเลือกสหกรณ์ก่อนเพิ่มกรรมการ");
@@ -197,12 +267,12 @@ function setupEventListeners() {
 
       fetchApi("addMember", params).then(result => {
         if (result) {
-          alert("เพิ่มรายชื่อคณะกรรมการสำเร็จ!");
+          toast.success("เพิ่่ملรายชื่่อคณะกรรมการสำเร็จ!");
           addMemberForm.reset();
           document.getElementById("new-member-by-election").checked = false;
           addMemberCard.style.display = "none";
           if (btnToggleAddMember) {
-            btnToggleAddMember.textContent = "เพิ่มกรรมการ";
+            btnToggleAddMember.textContent = "เพิ่่ลกรรมการ";
           }
           
           // Clear API cache
@@ -212,7 +282,12 @@ function setupEventListeners() {
           loadBoardData(currentCoop, yearSelect.value);
         }
       }).catch(err => {
-        alert(`เกิดข้อผิดพลาด: ${err.message}`);
+        toast.error(`เกิดข้อมูลผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึ่รายชื่่กรรมการ";
+        }
       });
     });
   }
@@ -335,7 +410,7 @@ function fetchApi(action, params = {}) {
     })
     .catch(err => {
       showSpinner(false);
-      alert(`API Error: ${err.message}`);
+      toast.error(`API Error: ${err.message}`);
       throw err;
     });
 }
