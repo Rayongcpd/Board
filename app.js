@@ -9,7 +9,7 @@ const API_BASE = CONFIG.API_BASE;
 const apiCache = {};
 
 // Toast notification system
-const toastContainer = {
+const toast = {
   _queue: [],
   _visible: 0,
 
