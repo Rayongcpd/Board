@@ -3,7 +3,7 @@
 
 // --- CONFIGURATION ---
 // Replace with your Google Apps Script Web App Deployment URL
-const API_BASE = "https://script.google.com/macros/s/<DEPLOY_ID>/exec";
+const API_BASE = "https://script.google.com/macros/s/AKfycbx6TUKnPE5N_mUsgafTHH-6-z3SaizfpbUkAGQY1fmw0deUTaY1nozIsKhnSX1JzUj8/exec";
 
 // In-memory cache for API requests
 const apiCache = {};
