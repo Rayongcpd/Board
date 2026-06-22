@@ -475,7 +475,7 @@ function loadMemberData(memberId, cooperativeId, targetYear) {
     
     // Render Profile UI
     const currentRecord = records[records.length - 1];
-    const currentPosition = currentRecord ? currentRecord.position : "-";
+    const currentPosition = (currentRecord && currentRecord.position) || member.position || "-";
 
     document.getElementById("detail-full-name").textContent = member.full_name;
     document.getElementById("detail-position").textContent = currentPosition;
@@ -656,7 +656,7 @@ function populatePrintMemo(member, coop, records, validation, targetYear) {
   document.getElementById("print-coop-name").textContent = coop.name || "-";
   
   const currentRecord = records[records.length - 1];
-  document.getElementById("print-member-position").textContent = currentRecord ? currentRecord.position : "-";
+  document.getElementById("print-member-position").textContent = (currentRecord && currentRecord.position) || member.position || "-";
   document.getElementById("print-member-label").textContent = currentRecord ? currentRecord.label : "-";
   document.getElementById("print-member-status").textContent = member.membership_status === "active" ? "เป็นสมาชิก" : "พ้นสมาชิกภาพ";
   
@@ -836,7 +836,7 @@ function getMockData(action, params) {
         results.push({
           member_id: member.member_id,
           full_name: member.full_name,
-          position: activeRecord.position || "",
+          position: activeRecord.position || member.position || "",
           current_label: activeRecord.label,
           status: status,
           summary: summary
