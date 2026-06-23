@@ -729,13 +729,19 @@ function handleRoute() {
         
         if (btnToggleEditCoop) btnToggleEditCoop.style.display = "inline-block";
         if (btnDeleteCoop) btnDeleteCoop.style.display = "inline-block";
+        
+        // Update back button to point to board with current coop and year
+        const btnBack = document.getElementById("btn-back-to-board");
+        if (btnBack) {
+          btnBack.href = `#/board?coop=${encodeURIComponent(params.coop)}&year=${encodeURIComponent(params.year)}`;
+        }
       } else {
         renderEmptyBoard();
         const btnToggleAddMem = document.getElementById("btn-toggle-add-member");
         const addMemCard = document.getElementById("add-member-card");
         if (btnToggleAddMem) {
           btnToggleAddMem.style.display = "none";
-          btnToggleAddMem.textContent = "เพิ่มกรรมการ";
+          btnToggleAddMem.textContent = "เพิ่่มกรรมการ";
         }
         if (addMemCard) addMemCard.style.display = "none";
         
@@ -755,6 +761,13 @@ function handleRoute() {
       if (addCoopCard) addCoopCard.style.display = "none";
       if (btnToggleEditCoop) btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
       
+      // Update back button to point to board with current coop and year
+      const btnBack = document.getElementById("btn-back-to-board");
+      if (btnBack && params.coop) {
+        const currentYear = yearSelect.value || new Date().getFullYear() + 543;
+        btnBack.href = `#/board?coop=${encodeURIComponent(params.coop)}&year=${encodeURIComponent(currentYear)}`;
+      }
+      
       // Hide member edit card upon navigate
       const editMemberCard = document.getElementById("edit-member-card");
       if (editMemberCard) editMemberCard.style.display = "none";
@@ -767,7 +780,7 @@ function handleRoute() {
       const btnToggleAddTerm = document.getElementById("btn-toggle-add-term");
       if (addTermFormContainer) addTermFormContainer.style.display = "none";
       if (editTermFormContainer) editTermFormContainer.style.display = "none";
-      if (btnToggleAddTerm) btnToggleAddTerm.textContent = "เพิ่มวาระประวัติ";
+      if (btnToggleAddTerm) btnToggleAddTerm.textContent = "เพิ่่มวาระประวัติ";
 
       if (params.id && params.coop) {
         loadMemberData(params.id, params.coop, yearSelect.value);
