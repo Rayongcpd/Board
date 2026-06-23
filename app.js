@@ -245,7 +245,7 @@ function setupEventListeners() {
       const endYearVal = parseInt(document.getElementById("new-member-end").value, 10);
       const params = {
         cooperative_id: currentCoop,
-        member_id: document.getElementById("new-member-id").value.trim() || undefined,
+        member_id: document.getElementById("new-member-id").value.trim(),
         full_name: document.getElementById("new-member-name").value.trim(),
         position: document.getElementById("new-member-position").value,
         term_number: document.getElementById("new-member-term").value,
@@ -809,7 +809,9 @@ function parseHash() {
 // --- DATA ACCESS LAYER (FETCH + CACHE + MOCK) ---
 function fetchApi(action, params = {}) {
   const isMockMode = API_BASE.includes("<DEPLOY_ID>");
+  // ponytail: filter out undefined/null to prevent "undefined" string in query params
   const queryStr = Object.keys(params)
+    .filter(k => params[k] !== undefined && params[k] !== null)
     .map(k => `${encodeURIComponent(k)}=${encodeURIComponent(params[k])}`)
     .join("&");
   const url = `${API_BASE}?action=${action}&${queryStr}`;
