@@ -407,8 +407,11 @@ function setupEventListeners() {
           if (result) {
             toast.success("ลบสหกรณ์สำเร็จ!");
             for (const key in apiCache) delete apiCache[key];
-            coopSelect.value = "";
-            window.location.hash = "#/";
+            loadCooperatives().then(coops => {
+              populateCooperativeDropdown(coops);
+              coopSelect.value = "";
+              window.location.hash = "#/";
+            });
           }
         }).catch(err => {
           toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
