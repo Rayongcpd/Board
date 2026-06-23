@@ -1004,7 +1004,7 @@ function getMockData(action, params) {
     if (params.member_id === "M-0042") {
       status = "warning";
       summary = "มีข้อควรระวัง: กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้";
-      recommendation = "หากต้องการดำรงตำแหน่งต่อในอนาคต ต้องพัก 2 ปีหลังสิ้นวาระนี้";
+      recommendation = "หากต้องการดำรงตำแหน่งต่อในอนาคต ต้องพัก 1 ปีหลังสิ้นวาระนี้";
       warnings.push({ id: "W-01", detail: "กำลังอยู่ในวาระสุดท้ายและปีสุดท้ายที่ดำรงตำแหน่งต่อเนื่องได้" });
     } else if (params.member_id === "M-0100") {
       status = "invalid";
