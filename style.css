@@ -599,3 +599,25 @@ tbody tr:hover {
 .print-memo {
   display: none;
 }
+
+/* Danger button styling */
+.btn-danger {
+  border-color: var(--status-invalid) !important;
+  color: var(--status-invalid) !important;
+}
+
+.btn-danger:hover {
+  background-color: var(--status-invalid) !important;
+  color: var(--bg-color) !important;
+}
+
+/* Secondary print and table actions styling */
+.btn-secondary {
+  border-color: var(--text-secondary);
+  color: var(--text-secondary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--text-secondary);
+  color: var(--bg-color);
+}

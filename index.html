@@ -39,6 +39,8 @@
       </div>
       <button class="btn" id="btn-refresh">รีเฟรชข้อมูล</button>
       <button class="btn" id="btn-toggle-add-coop">เพิ่มสหกรณ์</button>
+      <button class="btn" id="btn-toggle-edit-coop" style="display: none;">แก้ไขการกำหนดค่า</button>
+      <button class="btn btn-danger" id="btn-delete-coop" style="display: none;">ลบสหกรณ์</button>
     </section>
 
     <!-- Add Cooperative Card (Hidden by default) -->
@@ -94,6 +96,64 @@
         </div>
         <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
           <button type="submit" class="btn">บันทึกข้อมูลสหกรณ์</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Edit Cooperative Card (Hidden by default) -->
+    <section class="card" id="edit-coop-card" style="display: none; margin-bottom: 2rem;">
+      <div class="card-header">
+        <h2 class="card-title">⚙️ แก้ไขข้อมูลสหกรณ์</h2>
+      </div>
+      <form id="edit-coop-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="form-group">
+          <label for="edit-coop-id">เลขทะเบียนสหกรณ์ (รหัสสหกรณ์ - แก้ไขไม่ได้)</label>
+          <input type="text" id="edit-coop-id" disabled style="opacity: 0.6; cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-name">ชื่อสหกรณ์</label>
+          <input type="text" id="edit-coop-name" placeholder="ตัวอย่าง: สหกรณ์ออมทรัพย์... จำกัด" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-type">ประเภทสหกรณ์</label>
+          <input type="text" id="edit-coop-type" placeholder="ตัวอย่าง: ออมทรัพย์" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-duration">ระยะเวลาวาระ (ปี)</label>
+          <input type="number" id="edit-coop-duration" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-max-terms">จำนวนวาระติดต่อกันสูงสุด</label>
+          <input type="number" id="edit-coop-max-terms" min="1" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-cooling">ระยะเวลาพักวาระ (จำนวนวาระ)</label>
+          <input type="number" id="edit-coop-cooling" min="0" max="10" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-size">จำนวนกรรมการ (คน)</label>
+          <input type="number" id="edit-coop-size" min="1" max="100" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-coop-fiscal-month">เดือนสิ้นสุดปีงบประมาณ</label>
+          <select id="edit-coop-fiscal-month" required>
+            <option value="1">มกราคม</option>
+            <option value="2">กุมภาพันธ์</option>
+            <option value="3">มีนาคม</option>
+            <option value="4">เมษายน</option>
+            <option value="5">พฤษภาคม</option>
+            <option value="6">มิถุนายน</option>
+            <option value="7">กรกฎาคม</option>
+            <option value="8">สิงหาคม</option>
+            <option value="9">กันยายน</option>
+            <option value="10">ตุลาคม</option>
+            <option value="11">พฤศจิกายน</option>
+            <option value="12">ธันวาคม</option>
+          </select>
+        </div>
+        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+          <button type="button" class="btn" id="btn-cancel-edit-coop" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
+          <button type="submit" class="btn">บันทึกการแก้ไข</button>
         </div>
       </form>
     </section>
@@ -219,8 +279,35 @@
       <div id="view-member" class="view" style="display: none;">
         <div class="action-bar">
           <a href="#/" class="btn" id="btn-back-to-board">← กลับหน้าตารางบอร์ด</a>
+          <button class="btn" id="btn-toggle-edit-member">📝 แก้ไขข้อมูลสมาชิก</button>
+          <button class="btn btn-danger" id="btn-delete-member">ลบสมาชิก</button>
           <button class="btn" id="btn-print-memo">🖨 พิมพ์บันทึกข้อความ</button>
         </div>
+
+        <!-- Edit Member Card (Hidden by default) -->
+        <section class="card" id="edit-member-card" style="display: none; margin-top: 1.5rem;">
+          <div class="card-header">
+            <h2 class="card-title">📝 แก้ไขข้อมูลสมาชิก</h2>
+          </div>
+          <form id="edit-member-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="form-group">
+              <label for="edit-member-name">ชื่อ-นามสกุล</label>
+              <input type="text" id="edit-member-name" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-member-status">สถานะภาพสมาชิก</label>
+              <select id="edit-member-status" required>
+                <option value="active">ยังคงสมาชิกภาพอยู่ (Active)</option>
+                <option value="resigned">ลาออก (Resigned)</option>
+                <option value="expelled">ให้ออก/ขับออก (Expelled)</option>
+              </select>
+            </div>
+            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+              <button type="button" class="btn" id="btn-cancel-edit-member" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
+              <button type="submit" class="btn">บันทึกการแก้ไข</button>
+            </div>
+          </form>
+        </section>
 
         <div class="card" style="margin-top: 1.5rem;">
           <div class="card-header">
@@ -256,6 +343,138 @@
           <span class="detail-label">ประวัติลำดับวาระ (Timeline)</span>
           <div class="timeline" id="member-timeline">
             <!-- Dynamically populated timeline steps -->
+          </div>
+        </div>
+
+        <!-- Detailed Term Records List -->
+        <div class="card" id="term-records-card" style="margin-top: 1.5rem;">
+          <div class="card-header">
+            <h2 class="card-title">📋 รายการประวัติวาระการทำงาน</h2>
+            <button class="btn" id="btn-toggle-add-term" style="padding: 0.3rem 1rem; font-size: 0.8rem;">เพิ่มวาระประวัติ</button>
+          </div>
+          
+          <!-- Add Term Record Form (Hidden by default) -->
+          <div id="add-term-form-container" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255,255,255,0.01);">
+            <h3 style="font-family: var(--font-mono); font-size: 1rem; margin-bottom: 1rem; color: var(--accent-color);">➕ เพิ่มประวัติวาระใหม่</h3>
+            <form id="add-term-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <div class="form-group">
+                <label for="add-term-number">วาระที่</label>
+                <input type="number" id="add-term-number" min="1" max="20" required>
+              </div>
+              <div class="form-group">
+                <label for="add-term-year">ปีในวาระ</label>
+                <input type="number" id="add-term-year" min="1" max="10" required>
+              </div>
+              <div class="form-group">
+                <label for="add-term-position">ตำแหน่งหน้าที่</label>
+                <select id="add-term-position" required>
+                  <option value="ประธานกรรมการ">ประธานกรรมการ</option>
+                  <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
+                  <option value="เลขานุการ">เลขานุการ</option>
+                  <option value="เหรัญญิก">เหรัญญิก</option>
+                  <option value="กรรมการ">กรรมการ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="add-term-start">ปีที่เริ่มต้นวาระ (พ.ศ.)</label>
+                <input type="number" id="add-term-start" min="2400" max="2700" placeholder="ตัวอย่าง: 2567" required>
+              </div>
+              <div class="form-group">
+                <label for="add-term-end-expected">ปีที่สิ้นสุดวาระคาดการณ์ (พ.ศ.)</label>
+                <input type="number" id="add-term-end-expected" min="2400" max="2700" placeholder="ตัวอย่าง: 2568" required>
+              </div>
+              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
+                <input type="checkbox" id="add-term-by-election" style="width: auto; height: 18px; cursor: pointer;">
+                <label for="add-term-by-election" style="margin: 0; cursor: pointer;">เป็นการเลือกตั้งซ่อม (By-election)</label>
+              </div>
+              <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <button type="button" class="btn" id="btn-cancel-add-term" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
+                <button type="submit" class="btn">บันทึกวาระ</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Edit Term Record Form (Hidden by default) -->
+          <div id="edit-term-form-container" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255,255,255,0.01);">
+            <h3 style="font-family: var(--font-mono); font-size: 1rem; margin-bottom: 1rem; color: var(--accent-color);">⚙️ แก้ไขประวัติวาระการทำงาน</h3>
+            <form id="edit-term-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+              <input type="hidden" id="edit-term-old-number">
+              <input type="hidden" id="edit-term-old-year">
+              
+              <div class="form-group">
+                <label for="edit-term-number">วาระที่</label>
+                <input type="number" id="edit-term-number" min="1" max="20" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-term-year">ปีในวาระ</label>
+                <input type="number" id="edit-term-year" min="1" max="10" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-term-position">ตำแหน่งหน้าที่</label>
+                <select id="edit-term-position" required>
+                  <option value="ประธานกรรมการ">ประธานกรรมการ</option>
+                  <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
+                  <option value="เลขานุการ">เลขานุการ</option>
+                  <option value="เหรัญญิก">เหรัญญิก</option>
+                  <option value="กรรมการ">กรรมการ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="edit-term-start">ปีที่เริ่มต้นวาระ (พ.ศ.)</label>
+                <input type="number" id="edit-term-start" min="2400" max="2700" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-term-end-expected">ปีที่สิ้นสุดวาระคาดการณ์ (พ.ศ.)</label>
+                <input type="number" id="edit-term-end-expected" min="2400" max="2700" required>
+              </div>
+              <div class="form-group">
+                <label for="edit-term-end-actual">ปีที่พ้นตำแหน่งจริง (พ.ศ. - ถ้ามี)</label>
+                <input type="number" id="edit-term-end-actual" min="2400" max="2700" placeholder="ว่างไว้หากยังไม่พ้นวาระ">
+              </div>
+              <div class="form-group">
+                <label for="edit-term-exit-reason">สาเหตุการพ้นตำแหน่งก่อนกำหนด</label>
+                <select id="edit-term-exit-reason">
+                  <option value="">-- ดำรงตำแหน่งปกติ / ยังไม่พ้นตำแหน่ง --</option>
+                  <option value="resigned">ลาออกส่วนบุคคล (resigned)</option>
+                  <option value="resigned_whole_board">คณะกรรมการลาออกทั้งคณะ (resigned_whole_board)</option>
+                  <option value="removed">ให้ออก/พ้นตำแหน่งโดยคำสั่ง (removed)</option>
+                  <option value="disqualified">ขาดคุณสมบัติ (disqualified)</option>
+                  <option value="not_elected">ไม่ได้รับการเลือกตั้งในรอบถัดไป (not_elected)</option>
+                </select>
+              </div>
+              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
+                <input type="checkbox" id="edit-term-by-election" style="width: auto; height: 18px; cursor: pointer;">
+                <label for="edit-term-by-election" style="margin: 0; cursor: pointer;">เป็นการเลือกตั้งซ่อม</label>
+              </div>
+              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
+                <input type="checkbox" id="edit-term-elected" style="width: auto; height: 18px; cursor: pointer;" checked>
+                <label for="edit-term-elected" style="margin: 0; cursor: pointer;">ผ่านการเลือกตั้ง/แต่งตั้งเสร็จสมบูรณ์</label>
+              </div>
+              <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <button type="button" class="btn" id="btn-cancel-edit-term" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
+                <button type="submit" class="btn">บันทึกการแก้ไขวาระ</button>
+              </div>
+            </form>
+          </div>
+
+          <div style="overflow-x: auto;">
+            <table id="member-terms-table">
+              <thead>
+                <tr>
+                  <th>วาระ/ปี</th>
+                  <th>ตำแหน่ง</th>
+                  <th>ช่วงเวลา (พ.ศ.)</th>
+                  <th>พ้นตำแหน่งจริง (พ.ศ.)</th>
+                  <th>ประเภทการเข้า</th>
+                  <th>สาเหตุพ้นตำแหน่ง</th>
+                  <th>สถานะแต่งตั้ง</th>
+                  <th>การดำเนินการ</th>
+                </tr>
+              </thead>
+              <tbody id="member-terms-table-body">
+                <!-- Dynamically loaded rows -->
+              </tbody>
+            </table>
           </div>
         </div>
 

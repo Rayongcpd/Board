@@ -302,6 +302,402 @@ function setupEventListeners() {
       });
     });
   }
+
+  // Cooperative Edit / Delete Setup
+  const btnToggleEditCoop = document.getElementById("btn-toggle-edit-coop");
+  const editCoopCard = document.getElementById("edit-coop-card");
+  const editCoopForm = document.getElementById("edit-coop-form");
+  const btnCancelEditCoop = document.getElementById("btn-cancel-edit-coop");
+  const btnDeleteCoop = document.getElementById("btn-delete-coop");
+
+  if (btnToggleEditCoop && editCoopCard) {
+    btnToggleEditCoop.addEventListener("click", () => {
+      const isHidden = editCoopCard.style.display === "none";
+      if (isHidden) {
+        const currentCoopId = coopSelect.value;
+        if (!currentCoopId) return;
+        loadCooperatives().then(coops => {
+          const coop = coops.find(c => String(c.cooperative_id) === String(currentCoopId));
+          if (coop) {
+            document.getElementById("edit-coop-id").value = coop.cooperative_id;
+            document.getElementById("edit-coop-name").value = coop.name || "";
+            document.getElementById("edit-coop-type").value = coop.type || "";
+            document.getElementById("edit-coop-duration").value = coop.term_duration_years || 2;
+            document.getElementById("edit-coop-max-terms").value = coop.max_consecutive_terms || 2;
+            document.getElementById("edit-coop-cooling").value = coop.cooling_off_terms || 1;
+            document.getElementById("edit-coop-size").value = coop.board_size || 15;
+            document.getElementById("edit-coop-fiscal-month").value = coop.fiscal_year_end_month || 12;
+            
+            editCoopCard.style.display = "block";
+            btnToggleEditCoop.textContent = "ปิดฟอร์มแก้ไข";
+            if (addCoopCard) addCoopCard.style.display = "none";
+            if (btnToggleAddCoop) btnToggleAddCoop.textContent = "เพิ่มสหกรณ์";
+          }
+        });
+      } else {
+        editCoopCard.style.display = "none";
+        btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
+      }
+    });
+  }
+
+  if (btnCancelEditCoop && editCoopCard) {
+    btnCancelEditCoop.addEventListener("click", () => {
+      editCoopCard.style.display = "none";
+      if (btnToggleEditCoop) btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
+    });
+  }
+
+  if (editCoopForm) {
+    editCoopForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const submitBtn = editCoopForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
+      const params = {
+        cooperative_id: document.getElementById("edit-coop-id").value,
+        name: document.getElementById("edit-coop-name").value.trim(),
+        type: document.getElementById("edit-coop-type").value.trim(),
+        term_duration_years: document.getElementById("edit-coop-duration").value,
+        max_consecutive_terms: document.getElementById("edit-coop-max-terms").value,
+        cooling_off_terms: document.getElementById("edit-coop-cooling").value,
+        board_size: document.getElementById("edit-coop-size").value,
+        fiscal_year_end_month: document.getElementById("edit-coop-fiscal-month").value
+      };
+
+      fetchApi("editCooperative", params).then(result => {
+        if (result) {
+          toast.success("แก้ไขข้อมูลสหกรณ์สำเร็จ!");
+          editCoopCard.style.display = "none";
+          if (btnToggleEditCoop) btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
+          
+          for (const key in apiCache) delete apiCache[key];
+          
+          loadCooperatives().then(coops => {
+            populateCooperativeDropdown(coops, params.cooperative_id);
+            loadBoardData(params.cooperative_id, yearSelect.value);
+          });
+        }
+      }).catch(err => {
+        toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึกการแก้ไข";
+        }
+      });
+    });
+  }
+
+  if (btnDeleteCoop) {
+    btnDeleteCoop.addEventListener("click", () => {
+      const currentCoopId = coopSelect.value;
+      if (!currentCoopId) return;
+      
+      const coopText = coopSelect.options[coopSelect.selectedIndex]?.text || currentCoopId;
+      if (confirm(`⚠️ คำเตือน: คุณต้องการลบสหกรณ์ "${coopText}" ใช่หรือไม่?\nการลบจะทำให้ข้อมูลกรรมการและประวัติวาระทั้งหมดของสหกรณ์นี้ถูกลบอย่างถาวร!`)) {
+        btnDeleteCoop.disabled = true;
+        btnDeleteCoop.textContent = "กำลังลบ...";
+        
+        fetchApi("deleteCooperative", { cooperative_id: currentCoopId }).then(result => {
+          if (result) {
+            toast.success("ลบสหกรณ์สำเร็จ!");
+            for (const key in apiCache) delete apiCache[key];
+            coopSelect.value = "";
+            window.location.hash = "#/";
+          }
+        }).catch(err => {
+          toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+        }).finally(() => {
+          btnDeleteCoop.disabled = false;
+          btnDeleteCoop.textContent = "ลบสหกรณ์";
+        });
+      }
+    });
+  }
+
+  // Member Edit / Delete Setup
+  const btnToggleEditMember = document.getElementById("btn-toggle-edit-member");
+  const editMemberCard = document.getElementById("edit-member-card");
+  const editMemberForm = document.getElementById("edit-member-form");
+  const btnCancelEditMember = document.getElementById("btn-cancel-edit-member");
+  const btnDeleteMember = document.getElementById("btn-delete-member");
+
+  if (btnToggleEditMember && editMemberCard) {
+    btnToggleEditMember.addEventListener("click", () => {
+      const isHidden = editMemberCard.style.display === "none";
+      if (isHidden) {
+        const nameVal = document.getElementById("detail-full-name").textContent;
+        const statusVal = document.getElementById("detail-status").textContent.includes("Active") ? "active" : "resigned";
+        
+        document.getElementById("edit-member-name").value = nameVal;
+        document.getElementById("edit-member-status").value = statusVal;
+        
+        editMemberCard.style.display = "block";
+        btnToggleEditMember.textContent = "ปิดฟอร์มแก้ไข";
+      } else {
+        editMemberCard.style.display = "none";
+        btnToggleEditMember.textContent = "📝 แก้ไขข้อมูลสมาชิก";
+      }
+    });
+  }
+
+  if (btnCancelEditMember && editMemberCard) {
+    btnCancelEditMember.addEventListener("click", () => {
+      editMemberCard.style.display = "none";
+      if (btnToggleEditMember) btnToggleEditMember.textContent = "📝 แก้ไขข้อมูลสมาชิก";
+    });
+  }
+
+  if (editMemberForm) {
+    editMemberForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const submitBtn = editMemberForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
+      const { params: routeParams } = parseHash();
+      const currentCoop = routeParams.coop;
+      const currentMemberId = routeParams.id;
+      
+      const params = {
+        cooperative_id: currentCoop,
+        member_id: currentMemberId,
+        full_name: document.getElementById("edit-member-name").value.trim(),
+        membership_status: document.getElementById("edit-member-status").value
+      };
+
+      fetchApi("editMember", params).then(result => {
+        if (result) {
+          toast.success("แก้ไขข้อมูลสมาชิกสำเร็จ!");
+          editMemberCard.style.display = "none";
+          if (btnToggleEditMember) btnToggleEditMember.textContent = "📝 แก้ไขข้อมูลสมาชิก";
+          
+          for (const key in apiCache) delete apiCache[key];
+          
+          loadMemberData(currentMemberId, currentCoop, yearSelect.value);
+        }
+      }).catch(err => {
+        toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึกการแก้ไข";
+        }
+      });
+    });
+  }
+
+  if (btnDeleteMember) {
+    btnDeleteMember.addEventListener("click", () => {
+      const { params: routeParams } = parseHash();
+      const currentCoop = routeParams.coop;
+      const currentMemberId = routeParams.id;
+      const memberName = document.getElementById("detail-full-name").textContent;
+      
+      if (confirm(`⚠️ คำเตือน: คุณต้องการลบสมาชิก "${memberName}" ใช่หรือไม่?\nการลบสมาชิกจะทำให้ประวัติวาระการทำงานทั้งหมดของสมาชิกรายนี้ถูกลบอย่างถาวร!`)) {
+        btnDeleteMember.disabled = true;
+        btnDeleteMember.textContent = "กำลังลบ...";
+        
+        fetchApi("deleteMember", { cooperative_id: currentCoop, member_id: currentMemberId }).then(result => {
+          if (result) {
+            toast.success("ลบข้อมูลสมาชิกสำเร็จ!");
+            for (const key in apiCache) delete apiCache[key];
+            window.location.hash = `#/board?coop=${encodeURIComponent(currentCoop)}&year=${encodeURIComponent(yearSelect.value)}`;
+          }
+        }).catch(err => {
+          toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+        }).finally(() => {
+          btnDeleteMember.disabled = false;
+          btnDeleteMember.textContent = "ลบสมาชิก";
+        });
+      }
+    });
+  }
+
+  // Term Records Management Setup
+  const btnToggleAddTerm = document.getElementById("btn-toggle-add-term");
+  const addTermFormContainer = document.getElementById("add-term-form-container");
+  const addTermForm = document.getElementById("add-term-form");
+  const btnCancelAddTerm = document.getElementById("btn-cancel-add-term");
+  
+  const editTermFormContainer = document.getElementById("edit-term-form-container");
+  const editTermForm = document.getElementById("edit-term-form");
+  const btnCancelEditTerm = document.getElementById("btn-cancel-edit-term");
+
+  if (btnToggleAddTerm && addTermFormContainer) {
+    btnToggleAddTerm.addEventListener("click", () => {
+      const isHidden = addTermFormContainer.style.display === "none";
+      addTermFormContainer.style.display = isHidden ? "block" : "none";
+      btnToggleAddTerm.textContent = isHidden ? "ปิดฟอร์มเพิ่ม" : "เพิ่มวาระประวัติ";
+      if (editTermFormContainer) editTermFormContainer.style.display = "none";
+    });
+  }
+
+  if (btnCancelAddTerm && addTermFormContainer) {
+    btnCancelAddTerm.addEventListener("click", () => {
+      addTermFormContainer.style.display = "none";
+      if (btnToggleAddTerm) btnToggleAddTerm.textContent = "เพิ่มวาระประวัติ";
+    });
+  }
+
+  if (btnCancelEditTerm && editTermFormContainer) {
+    btnCancelEditTerm.addEventListener("click", () => {
+      editTermFormContainer.style.display = "none";
+    });
+  }
+
+  const addTermStart = document.getElementById("add-term-start");
+  const addTermEndExpected = document.getElementById("add-term-end-expected");
+  
+  if (addTermStart && addTermEndExpected) {
+    addTermStart.addEventListener("change", () => {
+      const startYearVal = parseInt(addTermStart.value, 10);
+      if (isNaN(startYearVal)) return;
+      
+      const { params: routeParams } = parseHash();
+      loadCooperatives().then(coops => {
+        const coop = coops.find(c => String(c.cooperative_id) === String(routeParams.coop));
+        if (coop && coop.term_duration_years) {
+          const durationYears = parseInt(coop.term_duration_years, 10);
+          addTermEndExpected.value = startYearVal + durationYears - 1;
+        }
+      });
+    });
+  }
+
+  const editTermStart = document.getElementById("edit-term-start");
+  const editTermEndExpected = document.getElementById("edit-term-end-expected");
+  
+  if (editTermStart && editTermEndExpected) {
+    editTermStart.addEventListener("change", () => {
+      const startYearVal = parseInt(editTermStart.value, 10);
+      if (isNaN(startYearVal)) return;
+      
+      const { params: routeParams } = parseHash();
+      loadCooperatives().then(coops => {
+        const coop = coops.find(c => String(c.cooperative_id) === String(routeParams.coop));
+        if (coop && coop.term_duration_years) {
+          const durationYears = parseInt(coop.term_duration_years, 10);
+          editTermEndExpected.value = startYearVal + durationYears - 1;
+        }
+      });
+    });
+  }
+
+  if (addTermForm) {
+    addTermForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const submitBtn = addTermForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
+      const { params: routeParams } = parseHash();
+      const currentCoop = routeParams.coop;
+      const currentMemberId = routeParams.id;
+      
+      const startYearVal = parseInt(document.getElementById("add-term-start").value, 10);
+      const endYearVal = parseInt(document.getElementById("add-term-end-expected").value, 10);
+      
+      const params = {
+        cooperative_id: currentCoop,
+        member_id: currentMemberId,
+        full_name: document.getElementById("detail-full-name").textContent,
+        position: document.getElementById("add-term-position").value,
+        term_number: document.getElementById("add-term-number").value,
+        year_in_term: document.getElementById("add-term-year").value,
+        period_start: isNaN(startYearVal) ? "" : `${startYearVal - 543}-01-01`,
+        period_end_expected: isNaN(endYearVal) ? "" : `${endYearVal - 543}-12-31`,
+        is_by_election: document.getElementById("add-term-by-election").checked
+      };
+
+      fetchApi("addMember", params).then(result => {
+        if (result) {
+          toast.success("เพิ่มข้อมูลวาระประวัติสำเร็จ!");
+          addTermForm.reset();
+          document.getElementById("add-term-by-election").checked = false;
+          addTermFormContainer.style.display = "none";
+          if (btnToggleAddTerm) btnToggleAddTerm.textContent = "เพิ่มวาระประวัติ";
+          
+          for (const key in apiCache) delete apiCache[key];
+          
+          loadMemberData(currentMemberId, currentCoop, yearSelect.value);
+        }
+      }).catch(err => {
+        toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึกวาระ";
+        }
+      });
+    });
+  }
+
+  if (editTermForm) {
+    editTermForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      
+      const submitBtn = editTermForm.querySelector("button[type='submit']");
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "กำลังบันทึก...";
+      }
+      
+      const { params: routeParams } = parseHash();
+      const currentCoop = routeParams.coop;
+      const currentMemberId = routeParams.id;
+      
+      const startYearVal = parseInt(document.getElementById("edit-term-start").value, 10);
+      const endExpectedVal = parseInt(document.getElementById("edit-term-end-expected").value, 10);
+      const endActualVal = parseInt(document.getElementById("edit-term-end-actual").value, 10);
+      const exitReasonVal = document.getElementById("edit-term-exit-reason").value;
+      
+      const params = {
+        cooperative_id: currentCoop,
+        member_id: currentMemberId,
+        old_term_number: document.getElementById("edit-term-old-number").value,
+        old_year_in_term: document.getElementById("edit-term-old-year").value,
+        term_number: document.getElementById("edit-term-number").value,
+        year_in_term: document.getElementById("edit-term-year").value,
+        position: document.getElementById("edit-term-position").value,
+        period_start: isNaN(startYearVal) ? "" : `${startYearVal - 543}-01-01`,
+        period_end_expected: isNaN(endExpectedVal) ? "" : `${endExpectedVal - 543}-12-31`,
+        period_end_actual: isNaN(endActualVal) ? "" : `${endActualVal - 543}-12-31`,
+        is_by_election: document.getElementById("edit-term-by-election").checked,
+        elected: document.getElementById("edit-term-elected").checked,
+        exit_reason: exitReasonVal || ""
+      };
+
+      fetchApi("editTermRecord", params).then(result => {
+        if (result) {
+          toast.success("แก้ไขข้อมูลวาระสำเร็จ!");
+          editTermFormContainer.style.display = "none";
+          
+          for (const key in apiCache) delete apiCache[key];
+          
+          loadMemberData(currentMemberId, currentCoop, yearSelect.value);
+        }
+      }).catch(err => {
+        toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+      }).finally(() => {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "บันทึกการแก้ไขวาระ";
+        }
+      });
+    });
+  }
 }
 
 // --- ROUTER & ROUTE HANDLERS ---
@@ -312,7 +708,11 @@ function handleRoute() {
   const coopSelect = document.getElementById("coop-select");
   const yearSelect = document.getElementById("year-select");
   
-  // Ensure cooperatives dropdown is loaded
+  const btnToggleEditCoop = document.getElementById("btn-toggle-edit-coop");
+  const btnDeleteCoop = document.getElementById("btn-delete-coop");
+  const editCoopCard = document.getElementById("edit-coop-card");
+  const addCoopCard = document.getElementById("add-coop-card");
+
   loadCooperatives().then(coops => {
     populateCooperativeDropdown(coops, params.coop);
     
@@ -326,6 +726,9 @@ function handleRoute() {
         loadBoardData(params.coop, params.year);
         const btnToggleAddMem = document.getElementById("btn-toggle-add-member");
         if (btnToggleAddMem) btnToggleAddMem.style.display = "inline-block";
+        
+        if (btnToggleEditCoop) btnToggleEditCoop.style.display = "inline-block";
+        if (btnDeleteCoop) btnDeleteCoop.style.display = "inline-block";
       } else {
         renderEmptyBoard();
         const btnToggleAddMem = document.getElementById("btn-toggle-add-member");
@@ -335,10 +738,37 @@ function handleRoute() {
           btnToggleAddMem.textContent = "เพิ่มกรรมการ";
         }
         if (addMemCard) addMemCard.style.display = "none";
+        
+        if (btnToggleEditCoop) btnToggleEditCoop.style.display = "none";
+        if (btnDeleteCoop) btnDeleteCoop.style.display = "none";
+        if (editCoopCard) editCoopCard.style.display = "none";
+        if (addCoopCard) addCoopCard.style.display = "none";
+        if (btnToggleEditCoop) btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
       }
     } else if (route === "#/member") {
       viewBoard.style.display = "none";
       viewMember.style.display = "block";
+      
+      if (btnToggleEditCoop) btnToggleEditCoop.style.display = "none";
+      if (btnDeleteCoop) btnDeleteCoop.style.display = "none";
+      if (editCoopCard) editCoopCard.style.display = "none";
+      if (addCoopCard) addCoopCard.style.display = "none";
+      if (btnToggleEditCoop) btnToggleEditCoop.textContent = "แก้ไขการกำหนดค่า";
+      
+      // Hide member edit card upon navigate
+      const editMemberCard = document.getElementById("edit-member-card");
+      if (editMemberCard) editMemberCard.style.display = "none";
+      const btnToggleEditMem = document.getElementById("btn-toggle-edit-member");
+      if (btnToggleEditMem) btnToggleEditMem.textContent = "📝 แก้ไขข้อมูลสมาชิก";
+      
+      // Hide add/edit term forms
+      const addTermFormContainer = document.getElementById("add-term-form-container");
+      const editTermFormContainer = document.getElementById("edit-term-form-container");
+      const btnToggleAddTerm = document.getElementById("btn-toggle-add-term");
+      if (addTermFormContainer) addTermFormContainer.style.display = "none";
+      if (editTermFormContainer) editTermFormContainer.style.display = "none";
+      if (btnToggleAddTerm) btnToggleAddTerm.textContent = "เพิ่มวาระประวัติ";
+
       if (params.id && params.coop) {
         loadMemberData(params.id, params.coop, yearSelect.value);
       }
@@ -568,6 +998,132 @@ function loadMemberData(memberId, cooperativeId, targetYear) {
     
     // Render Timeline UI
     renderTimeline(records);
+
+    // Render Term Records Table UI
+    const tableBody = document.getElementById("member-terms-table-body");
+    if (tableBody) {
+      tableBody.innerHTML = "";
+      
+      if (records.length === 0) {
+        const tr = document.createElement("tr");
+        const td = document.createElement("td");
+        td.colSpan = 8;
+        td.style.textAlign = "center";
+        td.textContent = "ไม่มีประวัติการดำรงตำแหน่ง";
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+      } else {
+        records.forEach(rec => {
+          const tr = document.createElement("tr");
+          
+          const tdLabel = document.createElement("td");
+          tdLabel.textContent = rec.label;
+          tdLabel.style.fontFamily = "var(--font-mono)";
+          
+          const tdPos = document.createElement("td");
+          tdPos.textContent = rec.position || "-";
+          
+          const tdPeriod = document.createElement("td");
+          const startYearBE = rec.period_start ? new Date(rec.period_start).getFullYear() + 543 : "-";
+          const endYearExpectedBE = rec.period_end_expected ? new Date(rec.period_end_expected).getFullYear() + 543 : "-";
+          tdPeriod.textContent = `${startYearBE} - ${endYearExpectedBE}`;
+          tdPeriod.style.fontFamily = "var(--font-mono)";
+          
+          const tdEndActual = document.createElement("td");
+          const endYearActualBE = rec.period_end_actual ? new Date(rec.period_end_actual).getFullYear() + 543 : "-";
+          tdEndActual.textContent = endYearActualBE;
+          tdEndActual.style.fontFamily = "var(--font-mono)";
+          
+          const tdType = document.createElement("td");
+          const isByElec = rec.is_by_election === true || String(rec.is_by_election).toLowerCase() === "true";
+          tdType.textContent = isByElec ? "เลือกตั้งซ่อม" : "เลือกตั้งปกติ";
+          
+          const tdExitReason = document.createElement("td");
+          tdExitReason.textContent = rec.exit_reason || "-";
+          
+          const tdElected = document.createElement("td");
+          const isElec = rec.elected === true || String(rec.elected).toLowerCase() === "true" || rec.elected === 1 || rec.elected === "1";
+          const electedBadge = document.createElement("span");
+          electedBadge.className = `badge ${isElec ? "valid" : "invalid"}`;
+          electedBadge.textContent = isElec ? "🟢 สมบูรณ์" : "🔴 ขาดคุณสมบัติ";
+          tdElected.appendChild(electedBadge);
+          
+          const tdActions = document.createElement("td");
+          
+          const editBtn = document.createElement("button");
+          editBtn.className = "btn";
+          editBtn.style.padding = "0.2rem 0.5rem";
+          editBtn.style.fontSize = "0.75rem";
+          editBtn.style.marginRight = "0.5rem";
+          editBtn.textContent = "แก้ไข";
+          editBtn.addEventListener("click", () => {
+            const addFormContainer = document.getElementById("add-term-form-container");
+            const btnAddTerm = document.getElementById("btn-toggle-add-term");
+            if (addFormContainer) addFormContainer.style.display = "none";
+            if (btnAddTerm) btnAddTerm.textContent = "เพิ่มวาระประวัติ";
+            
+            const editFormContainer = document.getElementById("edit-term-form-container");
+            if (editFormContainer) {
+              editFormContainer.style.display = "block";
+              
+              document.getElementById("edit-term-old-number").value = rec.term_number;
+              document.getElementById("edit-term-old-year").value = rec.year_in_term;
+              document.getElementById("edit-term-number").value = rec.term_number;
+              document.getElementById("edit-term-year").value = rec.year_in_term;
+              document.getElementById("edit-term-position").value = rec.position || "กรรมการ";
+              document.getElementById("edit-term-start").value = rec.period_start ? new Date(rec.period_start).getFullYear() + 543 : "";
+              document.getElementById("edit-term-end-expected").value = rec.period_end_expected ? new Date(rec.period_end_expected).getFullYear() + 543 : "";
+              document.getElementById("edit-term-end-actual").value = rec.period_end_actual ? new Date(rec.period_end_actual).getFullYear() + 543 : "";
+              document.getElementById("edit-term-exit-reason").value = rec.exit_reason || "";
+              document.getElementById("edit-term-by-election").checked = isByElec;
+              document.getElementById("edit-term-elected").checked = isElec;
+            }
+          });
+          
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "btn btn-danger";
+          deleteBtn.style.padding = "0.2rem 0.5rem";
+          deleteBtn.style.fontSize = "0.75rem";
+          deleteBtn.textContent = "ลบ";
+          deleteBtn.addEventListener("click", () => {
+            if (confirm(`คุณต้องการลบประวัติวาระ ${rec.label} ใช่หรือไม่?`)) {
+              deleteBtn.disabled = true;
+              deleteBtn.textContent = "...";
+              fetchApi("deleteTermRecord", {
+                cooperative_id: cooperativeId,
+                member_id: memberId,
+                term_number: rec.term_number,
+                year_in_term: rec.year_in_term
+              }).then(result => {
+                if (result) {
+                  toast.success("ลบวาระสำเร็จ!");
+                  for (const key in apiCache) delete apiCache[key];
+                  loadMemberData(memberId, cooperativeId, targetYear);
+                }
+              }).catch(err => {
+                toast.error(`เกิดข้อผิดพลาด: ${err.message}`);
+                deleteBtn.disabled = false;
+                deleteBtn.textContent = "ลบ";
+              });
+            }
+          });
+          
+          tdActions.appendChild(editBtn);
+          tdActions.appendChild(deleteBtn);
+          
+          tr.appendChild(tdLabel);
+          tr.appendChild(tdPos);
+          tr.appendChild(tdPeriod);
+          tr.appendChild(tdEndActual);
+          tr.appendChild(tdType);
+          tr.appendChild(tdExitReason);
+          tr.appendChild(tdElected);
+          tr.appendChild(tdActions);
+          
+          tableBody.appendChild(tr);
+        });
+      }
+    }
     
     // Render Rules List UI
     renderRulesList(validation.rules, validation.warnings);
@@ -1014,6 +1570,84 @@ function getMockData(action, params) {
     }
 
     return { status, rules, warnings, summary, recommendation };
+  }
+
+  if (action === "editCooperative") {
+    const coop = mockCooperatives.find(c => String(c.cooperative_id) === String(params.cooperative_id));
+    if (coop) {
+      if (params.name) coop.name = params.name;
+      if (params.type) coop.type = params.type;
+      if (params.term_duration_years) coop.term_duration_years = parseInt(params.term_duration_years, 10);
+      if (params.max_consecutive_terms) coop.max_consecutive_terms = parseInt(params.max_consecutive_terms, 10);
+      if (params.cooling_off_terms) coop.cooling_off_terms = parseInt(params.cooling_off_terms, 10);
+      if (params.board_size) coop.board_size = parseInt(params.board_size, 10);
+      if (params.fiscal_year_end_month) coop.fiscal_year_end_month = parseInt(params.fiscal_year_end_month, 10);
+      return coop;
+    }
+    return null;
+  }
+
+  if (action === "deleteCooperative") {
+    mockCooperatives = mockCooperatives.filter(c => String(c.cooperative_id) !== String(params.cooperative_id));
+    mockMembers = mockMembers.filter(m => String(m.cooperative_id) !== String(params.cooperative_id));
+    mockTermRecords = mockTermRecords.filter(r => String(r.cooperative_id) !== String(params.cooperative_id));
+    return { deleted: true };
+  }
+
+  if (action === "editMember") {
+    const mem = mockMembers.find(m => String(m.cooperative_id) === String(params.cooperative_id) && String(m.member_id) === String(params.member_id));
+    if (mem) {
+      if (params.full_name) mem.full_name = params.full_name;
+      if (params.membership_status) mem.membership_status = params.membership_status;
+      return mem;
+    }
+    return null;
+  }
+
+  if (action === "deleteMember") {
+    mockMembers = mockMembers.filter(m => !(String(m.cooperative_id) === String(params.cooperative_id) && String(m.member_id) === String(params.member_id)));
+    mockTermRecords = mockTermRecords.filter(r => !(String(r.cooperative_id) === String(params.cooperative_id) && String(r.member_id) === String(params.member_id)));
+    return { deleted: true };
+  }
+
+  if (action === "editTermRecord") {
+    const record = mockTermRecords.find(r => 
+      String(r.cooperative_id) === String(params.cooperative_id) &&
+      String(r.member_id) === String(params.member_id) &&
+      parseInt(r.term_number, 10) === parseInt(params.old_term_number, 10) &&
+      parseInt(r.year_in_term, 10) === parseInt(params.old_year_in_term, 10)
+    );
+    if (record) {
+      if (params.term_number) record.term_number = parseInt(params.term_number, 10);
+      if (params.year_in_term) record.year_in_term = parseInt(params.year_in_term, 10);
+      const tNum = params.term_number ? parseInt(params.term_number, 10) : parseInt(params.old_term_number, 10);
+      const yInTerm = params.year_in_term ? parseInt(params.year_in_term, 10) : parseInt(params.old_year_in_term, 10);
+      record.label = tNum + "/" + yInTerm;
+      
+      if (params.position !== undefined) record.position = params.position;
+      if (params.is_by_election !== undefined) {
+        record.is_by_election = (params.is_by_election === true || params.is_by_election === "true" || params.is_by_election === "TRUE");
+      }
+      if (params.period_start !== undefined) record.period_start = params.period_start;
+      if (params.period_end_expected !== undefined) record.period_end_expected = params.period_end_expected;
+      if (params.period_end_actual !== undefined) record.period_end_actual = params.period_end_actual;
+      if (params.elected !== undefined) {
+        record.elected = (params.elected === true || params.elected === "true" || params.elected === "TRUE");
+      }
+      if (params.exit_reason !== undefined) record.exit_reason = params.exit_reason;
+      return record;
+    }
+    return null;
+  }
+
+  if (action === "deleteTermRecord") {
+    mockTermRecords = mockTermRecords.filter(r => !(
+      String(r.cooperative_id) === String(params.cooperative_id) &&
+      String(r.member_id) === String(params.member_id) &&
+      parseInt(r.term_number, 10) === parseInt(params.term_number, 10) &&
+      parseInt(r.year_in_term, 10) === parseInt(params.year_in_term, 10)
+    ));
+    return { deleted: true };
   }
   
   return null;
