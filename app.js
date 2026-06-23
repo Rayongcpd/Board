@@ -222,7 +222,15 @@ function setupEventListeners() {
       const isHidden = addMemberCard.style.display === "none";
       addMemberCard.style.display = isHidden ? "block" : "none";
       btnToggleAddMember.textContent = isHidden ? "ปิดฟอร์ม" : "เพิ่มกรรมการ";
+      if (isHidden) {
+        autoCalculateFormYears("member");
+      }
     });
+  }
+
+  const newMemberYearInTerm = document.getElementById("new-member-year-in-term");
+  if (newMemberYearInTerm) {
+    newMemberYearInTerm.addEventListener("change", () => autoCalculateFormYears("member"));
   }
 
   if (addMemberForm) {
@@ -541,7 +549,15 @@ function setupEventListeners() {
       addTermFormContainer.style.display = isHidden ? "block" : "none";
       btnToggleAddTerm.textContent = isHidden ? "ปิดฟอร์มเพิ่ม" : "เพิ่มวาระประวัติ";
       if (editTermFormContainer) editTermFormContainer.style.display = "none";
+      if (isHidden) {
+        autoCalculateFormYears("term");
+      }
     });
+  }
+
+  const addTermYear = document.getElementById("add-term-year");
+  if (addTermYear) {
+    addTermYear.addEventListener("change", () => autoCalculateFormYears("term"));
   }
 
   if (btnCancelAddTerm && addTermFormContainer) {
@@ -1669,4 +1685,41 @@ function getMockData(action, params) {
   }
   
   return null;
+}
+
+// Auto-calculate start and end years for Add Member and Add Term forms
+function autoCalculateFormYears(type) {
+  const coopSelect = document.getElementById("coop-select");
+  const yearSelect = document.getElementById("year-select");
+  const selectedCoopId = coopSelect.value;
+  const targetYear = parseInt(yearSelect.value, 10);
+
+  if (!selectedCoopId || isNaN(targetYear)) return;
+
+  loadCooperatives().then(coops => {
+    const coop = coops.find(c => String(c.cooperative_id) === String(selectedCoopId));
+    const termDuration = coop ? parseInt(coop.term_duration_years, 10) : 2;
+
+    if (type === "member") {
+      const yearInTermInput = document.getElementById("new-member-year-in-term");
+      const startYearInput = document.getElementById("new-member-start");
+      const endYearInput = document.getElementById("new-member-end");
+      
+      const yearInTerm = parseInt(yearInTermInput.value, 10) || 1;
+      const calculatedStart = targetYear - yearInTerm + 1;
+      
+      startYearInput.value = calculatedStart;
+      endYearInput.value = calculatedStart + termDuration - 1;
+    } else if (type === "term") {
+      const yearInTermInput = document.getElementById("add-term-year");
+      const startYearInput = document.getElementById("add-term-start");
+      const endYearInput = document.getElementById("add-term-end-expected");
+      
+      const yearInTerm = parseInt(yearInTermInput.value, 10) || 1;
+      const calculatedStart = targetYear - yearInTerm + 1;
+      
+      startYearInput.value = calculatedStart;
+      endYearInput.value = calculatedStart + termDuration - 1;
+    }
+  });
 }
