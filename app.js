@@ -1031,7 +1031,7 @@ function loadMemberData(memberId, cooperativeId, targetYear) {
     document.getElementById("detail-validation-recommendation").textContent = validation.recommendation;
     
     // Render Timeline UI
-    renderTimeline(records);
+    renderTimeline(records, targetYear, coop);
 
     // Render Term Records Table UI
     const tableBody = document.getElementById("member-terms-table-body");
@@ -1205,7 +1205,7 @@ function updateStats(stats) {
   document.getElementById("stat-invalid-count").textContent = stats.invalid;
 }
 
-function renderTimeline(records) {
+function renderTimeline(records, targetYear, coop) {
   const timeline = document.getElementById("member-timeline");
   timeline.innerHTML = "";
   
@@ -1214,35 +1214,76 @@ function renderTimeline(records) {
     return;
   }
   
-  records.forEach((rec, index) => {
-    const step = document.createElement("div");
-    step.className = "timeline-step";
-    if (index === records.length - 1) {
-      step.classList.add("active");
+  const targetYearInt = parseInt(targetYear, 10);
+  const termDuration = coop ? (parseInt(coop.term_duration_years, 10) || 2) : 2;
+  const expandedSteps = [];
+  
+  records.forEach(rec => {
+    const startDate = new Date(rec.period_start);
+    const startYear = isNaN(startDate.getFullYear()) ? null : startDate.getFullYear();
+    
+    if (startYear) {
+      const endExpectedDate = new Date(rec.period_end_expected);
+      const endYearExpected = isNaN(endExpectedDate.getFullYear()) ? (startYear + termDuration - 1) : endExpectedDate.getFullYear();
+      
+      const endActualDate = rec.period_end_actual ? new Date(rec.period_end_actual) : null;
+      const endYearActual = (endActualDate && !isNaN(endActualDate.getFullYear())) ? endActualDate.getFullYear() : null;
+      
+      const finalEndYear = endYearActual || endYearExpected;
+      const duration = finalEndYear - startYear + 1;
+      
+      const startYearInTerm = parseInt(rec.year_in_term, 10) || 1;
+      
+      for (let y = 0; y < duration; y++) {
+        expandedSteps.push({
+          label: rec.term_number + "/" + (startYearInTerm + y),
+          position: rec.position || "-",
+          yearBE: startYear + y + 543,
+          elected: rec.elected === true || String(rec.elected).toLowerCase() === "true" || rec.elected === 1 || rec.elected === "1"
+        });
+      }
+    } else {
+      expandedSteps.push({
+        label: rec.label,
+        position: rec.position || "-",
+        yearBE: "-",
+        elected: rec.elected === true || String(rec.elected).toLowerCase() === "true" || rec.elected === 1 || rec.elected === "1"
+      });
     }
-    if (!rec.elected) {
-      step.classList.add("unelected");
+  });
+
+  // Determine which step is active. Match by yearBE. If none matches, default to last step.
+  let activeIndex = expandedSteps.findIndex(step => step.yearBE === targetYearInt);
+  if (activeIndex === -1) {
+    activeIndex = expandedSteps.length - 1;
+  }
+  
+  expandedSteps.forEach((step, index) => {
+    const stepEl = document.createElement("div");
+    stepEl.className = "timeline-step";
+    if (index === activeIndex) {
+      stepEl.classList.add("active");
+    }
+    if (!step.elected) {
+      stepEl.classList.add("unelected");
     }
     
     const dot = document.createElement("div");
     dot.className = "timeline-dot";
-    dot.textContent = rec.label;
+    dot.textContent = step.label;
     
     const label = document.createElement("div");
     label.className = "timeline-label";
-    label.textContent = rec.position;
+    label.textContent = step.position;
     
     const date = document.createElement("span");
     date.className = "timeline-date";
-    // Show start year (converted to BE for display)
-    const startDate = new Date(rec.period_start);
-    const startYearBE = isNaN(startDate.getFullYear()) ? "-" : startDate.getFullYear() + 543;
-    date.textContent = `พ.ศ. ${startYearBE}`;
+    date.textContent = step.yearBE !== "-" ? `พ.ศ. ${step.yearBE}` : "-";
     
-    step.appendChild(dot);
-    step.appendChild(label);
-    step.appendChild(date);
-    timeline.appendChild(step);
+    stepEl.appendChild(dot);
+    stepEl.appendChild(label);
+    stepEl.appendChild(date);
+    timeline.appendChild(stepEl);
   });
 }
 
