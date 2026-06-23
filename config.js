@@ -3,7 +3,7 @@
 
 const CONFIG = {
   // Google Apps Script Web App Deployment URL
-  API_BASE: "https://script.google.com/macros/s/AKfycbwLXJQ5AAKaxqzG-oNAacchVqxFFjspvu5po25spYg1VOxNSletJHo-g8j3xmfBFkLC/exec",
+  API_BASE: "https://script.google.com/macros/s/AKfycbw785lwSnoPq8TPuzva5dnhbKLO8kaa9CB7_mcANCCTCfebpEBlIS51JDdcPpmjqX0B/exec",
 
   // Content Security Policy
   CSP: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;   connect-src https://script.google.com https://script.googleusercontent.com; frame-src 'none'; object-src 'none';",
