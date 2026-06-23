@@ -1324,7 +1324,7 @@ function populatePrintMemo(member, coop, records, validation, targetYear) {
   
   const currentRecord = records[records.length - 1];
   document.getElementById("print-member-position").textContent = (currentRecord && currentRecord.position) || member.position || "-";
-  document.getElementById("print-member-label").textContent = currentRecord ? currentRecord.label : "-";
+  document.getElementById("print-member-label").textContent = validation.dynamic_label || (currentRecord ? currentRecord.label : "-");
   document.getElementById("print-member-status").textContent = member.membership_status === "active" ? "เป็นสมาชิก" : "พ้นสมาชิกภาพ";
   
   // Memo Status and Recommendations
@@ -1498,12 +1498,26 @@ function getMockData(action, params) {
           status = "invalid";
           summary = "ตรวจพบเงื่อนไขไม่ถูกต้อง: ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)";
         }
+
+        let currentLabel = activeRecord.label;
+        const startYear = new Date(activeRecord.period_start).getFullYear();
+        if (!isNaN(startYear)) {
+          const diff = targetYearInt - startYear;
+          const calculatedYearInTerm = parseInt(activeRecord.year_in_term, 10) + diff;
+          const duration = coopConf ? parseInt(coopConf.term_duration_years, 10) : 2;
+          if (calculatedYearInTerm >= 1 && calculatedYearInTerm <= duration) {
+            currentLabel = activeRecord.term_number + "/" + calculatedYearInTerm;
+            if (status === "valid") {
+              summary = `การดำรงตำแหน่งปกติถูกต้องในวาระ ${currentLabel}`;
+            }
+          }
+        }
         
         results.push({
           member_id: member.member_id,
           full_name: member.full_name,
           position: activeRecord.position || member.position || "",
-          current_label: activeRecord.label,
+          current_label: currentLabel,
           status: status,
           summary: summary
         });
@@ -1578,8 +1592,26 @@ function getMockData(action, params) {
     const member = mockMembers.find(m => m.member_id === params.member_id && m.cooperative_id === params.cooperative_id);
     const records = mockTermRecords.filter(r => r.member_id === params.member_id && r.cooperative_id === params.cooperative_id);
     
+    const current = records[records.length - 1];
+    let dynamicLabel = current ? current.label : "-";
+    if (current && params.evaluation_date) {
+      const evalDate = new Date(params.evaluation_date);
+      const startDate = new Date(current.period_start);
+      if (!isNaN(evalDate.getTime()) && !isNaN(startDate.getTime())) {
+        const evalYear = evalDate.getFullYear();
+        const startYear = startDate.getFullYear();
+        const diff = evalYear - startYear;
+        const calculatedYear = parseInt(current.year_in_term, 10) + diff;
+        const coopConf = mockCooperatives.find(c => String(c.cooperative_id) === String(params.cooperative_id));
+        const duration = coopConf ? parseInt(coopConf.term_duration_years, 10) : 2;
+        if (calculatedYear >= 1 && calculatedYear <= duration) {
+          dynamicLabel = current.term_number + "/" + calculatedYear;
+        }
+      }
+    }
+
     let status = "valid";
-    let summary = "ดำรงตำแหน่งถูกต้องตามข้อบังคับ";
+    let summary = current ? `การดำรงตำแหน่งปกติถูกต้องในวาระ ${dynamicLabel}` : "ดำรงตำแหน่งถูกต้องตามข้อบังคับ";
     let recommendation = "ดำรงตำแหน่งต่อไปจนครบกำหนดวาระปกติ";
     let rules = [
       { id: "R-01", passed: true, detail: "ดำรงตำแหน่งต่อเนื่องไม่เกินกำหนด" },
@@ -1603,7 +1635,7 @@ function getMockData(action, params) {
       rules[0] = { id: "R-01", passed: false, detail: "ดำรงตำแหน่งต่อเนื่องเกินกำหนด (3 วาระ)" };
     }
 
-    return { status, rules, warnings, summary, recommendation };
+    return { status, rules, warnings, summary, recommendation, dynamic_label: dynamicLabel };
   }
 
   if (action === "editCooperative") {
