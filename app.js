@@ -1439,6 +1439,31 @@ function setupSimulationEvents() {
     }
     runMaxChangeSimulation(newMax);
   });
+
+  // Dynamic show/hide in Individual Simulator form
+  const historySelect = document.getElementById("form-sim-history-select");
+  if (historySelect) {
+    historySelect.addEventListener("change", (e) => {
+      const showFields = e.target.value !== "new";
+      document.getElementById("sim-history-fields").style.display = showFields ? "grid" : "none";
+      document.getElementById("sim-exit-reason-field").style.display = showFields ? "block" : "none";
+    });
+  }
+
+  const entryTypeSelect = document.getElementById("form-sim-entry-type");
+  if (entryTypeSelect) {
+    entryTypeSelect.addEventListener("change", (e) => {
+      const showVacancy = e.target.value === "vacancy";
+      document.getElementById("sim-vacancy-fields").style.display = showVacancy ? "grid" : "none";
+    });
+  }
+
+  const btnRunInd = document.getElementById("btn-run-individual-sim");
+  if (btnRunInd) {
+    btnRunInd.addEventListener("click", () => {
+      runIndividualSimulation();
+    });
+  }
 }
 
 // จำลองการลาออกทั้งคณะ (R7)
@@ -1571,6 +1596,155 @@ function runMaxChangeSimulation(newMax) {
   tbody.appendChild(tr);
   resultCard.style.display = "block";
   resultCard.scrollIntoView({ behavior: 'smooth' });
+}
+
+// วิเคราะห์จำลองสถานการณ์วาระรายบุคคล
+function runIndividualSimulation() {
+  const historySelect = document.getElementById("form-sim-history-select").value;
+  const lastStartStr = document.getElementById("form-sim-last-start").value;
+  const lastEndStr = document.getElementById("form-sim-last-end").value;
+  const exitReason = document.getElementById("form-sim-exit-reason").value;
+  
+  const targetPos = document.getElementById("form-sim-target-pos").value;
+  const electionDate = document.getElementById("form-sim-election-date").value;
+  const entryTypeSelect = document.getElementById("form-sim-entry-type").value;
+  
+  const predStartStr = document.getElementById("form-sim-predecessor-start").value;
+  const predTermSelect = document.getElementById("form-sim-predecessor-term").value;
+  
+  const chairResign = document.getElementById("form-sim-chair-resign").checked;
+  const sameYear = document.getElementById("form-sim-same-year").checked;
+  const covidSuspended = document.getElementById("form-sim-covid").checked;
+
+  if (!electionDate) {
+    alert("กรุณาระบุวันที่มีการเลือกตั้งใหม่");
+    return;
+  }
+
+  // ปรับแต่ง dates
+  let lastEndDate = lastEndStr || addFiscalYear(electionDate, -1);
+  let lastStartDate = lastStartStr || addFiscalYear(lastEndDate, -1);
+
+  // 1. สร้าง mock data
+  const director = { id: "sim-dir", fullName: "ผู้สมัครจำลอง", status: "active" };
+  const history = [];
+
+  if (historySelect !== "new") {
+    const parts = historySelect.split("-");
+    const termNo = parseInt(parts[0]);
+    const yearNo = parseInt(parts[1]);
+
+    if (termNo === 1 && yearNo === 1) {
+      history.push({ id: "t1", directorId: "sim-dir", termNo: 1, yearNo: 1, startDate: lastStartDate, endDate: lastEndDate, exitType: exitReason });
+    } else if (termNo === 1 && yearNo === 2) {
+      history.push({ id: "t1", directorId: "sim-dir", termNo: 1, yearNo: 1, startDate: addFiscalYear(lastStartDate, -1), endDate: lastStartDate, exitType: "term_end" });
+      history.push({ id: "t2", directorId: "sim-dir", termNo: 1, yearNo: 2, startDate: lastStartDate, endDate: lastEndDate, exitType: exitReason });
+    } else if (termNo === 2 && yearNo === 1) {
+      history.push({ id: "t1", directorId: "sim-dir", termNo: 1, yearNo: 1, startDate: addFiscalYear(lastStartDate, -2), endDate: addFiscalYear(lastStartDate, -1), exitType: "term_end" });
+      history.push({ id: "t2", directorId: "sim-dir", termNo: 1, yearNo: 2, startDate: addFiscalYear(lastStartDate, -1), endDate: lastStartDate, exitType: "term_end" });
+      history.push({ id: "t3", directorId: "sim-dir", termNo: 2, yearNo: 1, startDate: lastStartDate, endDate: lastEndDate, exitType: exitReason });
+    } else if (termNo === 2 && yearNo === 2) {
+      history.push({ id: "t1", directorId: "sim-dir", termNo: 1, yearNo: 1, startDate: addFiscalYear(lastStartDate, -3), endDate: addFiscalYear(lastStartDate, -2), exitType: "term_end" });
+      history.push({ id: "t2", directorId: "sim-dir", termNo: 1, yearNo: 2, startDate: addFiscalYear(lastStartDate, -2), endDate: addFiscalYear(lastStartDate, -1), exitType: "term_end" });
+      history.push({ id: "t3", directorId: "sim-dir", termNo: 2, yearNo: 1, startDate: addFiscalYear(lastStartDate, -1), endDate: lastStartDate, exitType: "term_end" });
+      history.push({ id: "t4", directorId: "sim-dir", termNo: 2, yearNo: 2, startDate: lastStartDate, endDate: lastEndDate, exitType: exitReason });
+    }
+  }
+
+  // 2. สร้าง mock bylaw config
+  const bylaw = {
+    chairMustResignFirst: chairResign,
+    directorToAuditorGapYears: 2,
+    suspendedPeriods: covidSuspended ? [{ startDate: lastEndDate, endDate: electionDate }] : []
+  };
+
+  // 3. ตรวจสอบประวัติการแทนตำแหน่งว่าง
+  let replacesTermRecord = null;
+  if (entryTypeSelect === "vacancy") {
+    const parts = predTermSelect.split("-");
+    const predTermNo = parseInt(parts[0]);
+    const predYearNo = parseInt(parts[1]);
+    const predStart = predStartStr || addFiscalYear(electionDate, -1);
+    replacesTermRecord = {
+      termNo: predTermNo,
+      yearNo: predYearNo,
+      startDate: predStart,
+      endDate: null
+    };
+  }
+
+  // 4. ทำการประเมิน
+  let eligible = false;
+  let nextTermNo = null;
+  let nextYearNo = null;
+  let reason = "";
+  let detail = "";
+
+  if (targetPos === "auditor") {
+    // สมัครเป็นผู้ตรวจสอบกิจการ
+    const check = checkDirectorToAuditorEligibility(director, history, electionDate, bylaw);
+    eligible = check.eligible;
+    reason = check.detail;
+    detail = check.detail;
+  } else {
+    // สมัครเป็นกรรมการ/ประธาน
+    const tempRecords = [...history];
+    const res = checkEligibility(director, tempRecords, electionDate, targetPos, bylaw);
+    
+    eligible = res.eligible;
+    if (res.eligible) {
+      // คำนวณวาระถัดไป
+      const entryType = entryTypeSelect === "vacancy" ? "replace_vacancy" : "regular_election";
+      const next = computeNextTerm({
+        director,
+        history: tempRecords,
+        entryType,
+        replacesTermRecord,
+        eventDate: electionDate,
+        sameYearReturn: sameYear
+      });
+      nextTermNo = next.termNo;
+      nextYearNo = next.yearNo;
+      reason = "สอดคล้องตามระเบียบ";
+      detail = `ได้รับคุณสมบัติผ่านการตรวจสอบเป็นวาระ ${next.termNo}/${next.yearNo}`;
+    } else {
+      reason = res.reason;
+      detail = res.detail;
+    }
+  }
+
+  // 5. แสดงผลลัพธ์
+  const badgeEl = document.getElementById("sim-result-term-badge");
+  const outcomeEl = document.getElementById("sim-result-eligible-badge");
+  const expEl = document.getElementById("sim-result-explanation");
+
+  if (eligible) {
+    outcomeEl.innerHTML = `<span class="badge badge-1-1" style="font-size:1.15rem; padding:0.5rem 1rem;">✅ คุณสมบัติผ่านการตรวจสอบ</span>`;
+    if (targetPos === "auditor") {
+      badgeEl.innerText = "ผู้ตรวจสอบ";
+      badgeEl.className = "badge badge-1-1";
+      expEl.innerHTML = `<strong>ผ่านเกณฑ์:</strong> ${detail}<br><br><span style="color:var(--text-secondary);">ตามระเบียบนายทะเบียนสหกรณ์ว่าด้วยการตรวจสอบกิจการของสหกรณ์ พ.ศ. 2563 กำหนดให้เว้นวรรคจากการเป็นกรรมการดำเนินการมาแล้วไม่น้อยกว่า 2 ปีบัญชี</span>`;
+    } else {
+      badgeEl.innerText = `${nextTermNo}/${nextYearNo}`;
+      badgeEl.className = `badge badge-${nextTermNo}-${nextYearNo}`;
+      
+      let legalText = `ผ่านเกณฑ์การนับวาระและมีคุณสมบัติถูกต้องตาม พ.ร.บ.สหกรณ์ มาตรา 50 โดยจะเข้าสู่วาระที่ ${nextTermNo} ปีที่ ${nextYearNo}`;
+      if (entryTypeSelect === "vacancy") {
+        legalText += ` (แทนตำแหน่งว่างโดยรับช่วงวาระที่เหลือของคนเดิม)`;
+      }
+      expEl.innerHTML = `<strong>ผ่านเกณฑ์:</strong> ${detail}<br><br><span style="color:var(--text-secondary);">${legalText}</span>`;
+    }
+  } else {
+    outcomeEl.innerHTML = `<span class="badge badge-2-2" style="font-size:1.15rem; padding:0.5rem 1rem;">❌ ขาดคุณสมบัติ / ต้องเว้นวรรค</span>`;
+    badgeEl.innerText = "ไม่มีสิทธิ์";
+    badgeEl.className = "badge badge-waive";
+    
+    let legalExplanation = detail;
+    if (reason === "waiver_not_complete") {
+      legalExplanation += `<br><br><span style="color:var(--text-secondary);">ตามกฎหมาย มาตรา 50 กำหนดให้ผู้ที่ดำรงตำแหน่งกรรมการดำเนินการติดต่อกันครบ 2 วาระ (ไม่ว่าจะอยู่เต็มวาระหรือพ้นก่อนครบกำหนดก็ตาม) จะต้องเว้นวรรคพ้นจากตำแหน่งมาแล้วอย่างน้อย 1 ปีบัญชีเต็ม จึงจะกลับมาสมัครใหม่ได้</span>`;
+    }
+    expEl.innerHTML = `<strong>ไม่ผ่านเกณฑ์:</strong> <span style="color:#FCA5A5;">${detail}</span><br><br>${legalExplanation}`;
+  }
 }
 
 // ============================================================================
@@ -2016,6 +2190,137 @@ async function runKMTestSuite() {
       });
     }
 
+    // =========================================================================
+    // CASE 18: (เพิ่มเติม) การเว้นวรรคในช่วงระงับจัดประชุม (COVID-19)
+    // =========================================================================
+    {
+      const dir18 = { id: "dir-18", fullName: "นาง ดี. (เว้นวรรคช่วงโควิด)", status: "active" };
+      const termHistory = [
+        { id: "t-18-1", directorId: "dir-18", termNo: 1, yearNo: 1, startDate: "2022-10-01", endDate: "2023-10-01", exitType: "term_end" },
+        { id: "t-18-2", directorId: "dir-18", termNo: 1, yearNo: 2, startDate: "2023-10-01", endDate: "2024-10-01", exitType: "term_end" },
+        { id: "t-18-3", directorId: "dir-18", termNo: 2, yearNo: 1, startDate: "2024-10-01", endDate: "2025-10-01", exitType: "term_end" },
+        { id: "t-18-4", directorId: "dir-18", termNo: 2, yearNo: 2, startDate: "2025-10-01", endDate: "2026-10-01", exitType: "term_end" }
+      ];
+      const suspendedPeriods = [{ startDate: "2026-10-01", endDate: "2027-12-31" }];
+      const mockElectionEvents = [
+        { id: "e-18-1", cooperativeId: mockCoop.id, eventDate: "2028-03-01", title: "ประชุมใหญ่สามัญประจำปี" }
+      ];
+      setMockData([dir18], termHistory, mockElectionEvents, { suspendedPeriods });
+      
+      const bylaws = JSON.parse(mockCoop.bylawConfig);
+      const res = checkEligibility(dir18, state.termRecords, "2028-03-01", "director", bylaws);
+      
+      testResults.push({
+        id: 18,
+        title: "การเว้นวรรคช่วงระงับจัดประชุม (COVID-19)",
+        expected: "สมัครได้ (ผ่าน 1 รอบเลือกตั้งหลังพ้นตำแหน่ง)",
+        passed: res.eligible && res.nextTermNo === 1 && res.nextYearNo === 1,
+        actual: `สิทธิ์: ${res.eligible ? 'ผ่าน' : 'ไม่ผ่าน'}, วาระ: ${res.nextTermNo || '-'}/${res.nextYearNo || '-'}`
+      });
+    }
+
+    // =========================================================================
+    // CASE 19: (เพิ่มเติม) สมัครเป็นผู้ตรวจสอบหลังพ้นกรรมการไม่ถึง 2 ปีบัญชี
+    // =========================================================================
+    {
+      const dir19 = { id: "dir-19", fullName: "นาย เอ. (อดีตกรรมการ)", status: "active" };
+      const termHistory = [
+        { id: "t-19-1", directorId: "dir-19", termNo: 1, yearNo: 1, startDate: "2023-10-01", endDate: "2024-10-01", exitType: "term_end" },
+        { id: "t-19-2", directorId: "dir-19", termNo: 1, yearNo: 2, startDate: "2024-10-01", endDate: "2025-10-01", exitType: "term_end" }
+      ];
+      setMockData([dir19], termHistory, [], { directorToAuditorGapYears: 2 });
+      
+      const bylaws = JSON.parse(mockCoop.bylawConfig);
+      const res = checkDirectorToAuditorEligibility(dir19, state.termRecords, "2026-10-01", bylaws);
+      
+      testResults.push({
+        id: 19,
+        title: "สมัครเป็นผู้ตรวจสอบกิจการห่างไม่ถึง 2 ปีบัญชี",
+        expected: "สมัครไม่ได้ (ต้องเว้น 2 ปีบัญชี)",
+        passed: !res.eligible && res.detail.includes("ต้องเว้นวรรคจากการเป็นกรรมการ"),
+        actual: `สิทธิ์: ${res.eligible ? 'ผ่าน' : 'ไม่ผ่าน'}, ผลลัพธ์: ${res.detail}`
+      });
+    }
+
+    // =========================================================================
+    // CASE 20: (เพิ่มเติม) แทนตำแหน่งว่าง คนเดิมทำงานไม่เกิน 180 วัน
+    // =========================================================================
+    {
+      const dirC = { id: "dir-C", fullName: "นาย ซี. (คนใหม่แทนตำแหน่งว่าง)", status: "active" };
+      const termHistoryB = [
+        { id: "t-b", directorId: "dir-B", termNo: 1, yearNo: 1, startDate: "2025-10-01", endDate: "2025-11-30", exitType: "resigned" }
+      ];
+      setMockData([dirC], termHistoryB);
+      
+      const next = computeNextTerm({
+        director: dirC,
+        history: [],
+        entryType: "replace_vacancy",
+        replacesTermRecord: termHistoryB[0],
+        eventDate: "2026-01-15"
+      });
+      
+      testResults.push({
+        id: 20,
+        title: "แทนตำแหน่งว่าง คนเดิมทำงานไม่เกิน 180 วัน",
+        expected: "ได้วาระ 1 ปีที่ 1 (1/1)",
+        passed: next.termNo === 1 && next.yearNo === 1,
+        actual: `วาระที่จะได้รับ: ${next.termNo}/${next.yearNo}`
+      });
+    }
+
+    // =========================================================================
+    // CASE 21: (เพิ่มเติม) แทนตำแหน่งว่าง คนเดิมทำงานเกิน 180 วัน
+    // =========================================================================
+    {
+      const dirC = { id: "dir-C", fullName: "นาย ซี. (คนใหม่แทนตำแหน่งว่าง)", status: "active" };
+      const termHistoryB = [
+        { id: "t-b", directorId: "dir-B", termNo: 1, yearNo: 1, startDate: "2025-10-01", endDate: "2026-06-10", exitType: "resigned" }
+      ];
+      setMockData([dirC], termHistoryB);
+      
+      const next = computeNextTerm({
+        director: dirC,
+        history: [],
+        entryType: "replace_vacancy",
+        replacesTermRecord: termHistoryB[0],
+        eventDate: "2026-08-01"
+      });
+      
+      testResults.push({
+        id: 21,
+        title: "แทนตำแหน่งว่าง คนเดิมทำงานเกิน 180 วัน",
+        expected: "ได้วาระ 1 ปีที่ 2 (1/2)",
+        passed: next.termNo === 1 && next.yearNo === 2,
+        actual: `วาระที่จะได้รับ: ${next.termNo}/${next.yearNo}`
+      });
+    }
+
+    // =========================================================================
+    // CASE 22: (เพิ่มเติม) กรรมการวาระ 2 ปีที่ 2 (2/2) สมัครประธาน (ต้องลาออก)
+    // =========================================================================
+    {
+      const dir22 = { id: "dir-22", fullName: "นาย เอ็กซ์. (กรรมการ 2/2)", status: "active" };
+      const termHistory = [
+        { id: "t-22-1", directorId: "dir-22", termNo: 1, yearNo: 1, startDate: "2022-10-01", endDate: "2023-10-01", exitType: "term_end" },
+        { id: "t-22-2", directorId: "dir-22", termNo: 1, yearNo: 2, startDate: "2023-10-01", endDate: "2024-10-01", exitType: "term_end" },
+        { id: "t-22-3", directorId: "dir-22", termNo: 2, yearNo: 1, startDate: "2024-10-01", endDate: "2025-10-01", exitType: "term_end" },
+        { id: "t-22-4", directorId: "dir-22", termNo: 2, yearNo: 2, startDate: "2025-10-01", endDate: null }
+      ];
+      setMockData([dir22], termHistory, [], { chairMustResignFirst: true });
+      
+      const bylaws = JSON.parse(mockCoop.bylawConfig);
+      const res = checkEligibility(dir22, state.termRecords, "2026-10-01", "chair", bylaws);
+      
+      testResults.push({
+        id: 22,
+        title: "กรรมการวาระ 2/2 สมัครเป็นประธาน (ต้องลาออก)",
+        expected: "สมัครไม่ได้ (ครบ 2 วาระติดต่อกัน)",
+        passed: !res.eligible && res.reason === "currently_serving",
+        actual: `สิทธิ์: ${res.eligible ? 'ผ่าน' : 'ไม่ผ่าน'}, เหตุผล: ${res.detail}`
+      });
+    }
+
   } catch (err) {
     console.error("Test execution failed:", err);
     alert("การทดสอบล้มเหลวเนื่องจากบั๊กในโค้ด: " + err.toString());
@@ -2062,7 +2367,7 @@ function renderTestResults(results) {
   });
 
   if (passedAll) {
-    alert("🚀 ผลการทดสอบ 16 กรณีศึกษา: ผ่านทั้งหมด (100% PASS)!");
+    alert(`🚀 ผลการทดสอบทั้งหมด ${results.length} กรณี: ผ่านทั้งหมด (100% PASS)!`);
   } else {
     alert("⚠️ ผลการทดสอบ: มีบางกรณีไม่ผ่านการทดสอบ กรุณาไล่ตรวจโค้ดคำนวณวาระ");
   }

@@ -675,6 +675,144 @@
           </div>
         </div>
 
+        <!-- Individual Simulator Form -->
+        <div class="card" style="margin-bottom: 2rem;">
+          <h2 style="color: var(--term-1-1); margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+            🎯 เครื่องมือจำลองวาระรายบุคคล (Individual Simulator)
+          </h2>
+          
+          <div class="grid-cols-2" style="gap: 2rem;">
+            <!-- Column 1: Inputs -->
+            <div>
+              <h3 style="color: #A5B4FC; font-size: 1rem; margin-bottom: 1rem;">1. ข้อมูลประวัติการดำรงตำแหน่งเดิม</h3>
+              
+              <div class="form-group">
+                <label for="form-sim-history-select">ประวัติการดำรงตำแหน่งเดิม:</label>
+                <select id="form-sim-history-select">
+                  <option value="new">-- ผู้สมัครหน้าใหม่ (ไม่เคยเป็นกรรมการมาก่อน) --</option>
+                  <option value="1-1">เคยดำรงตำแหน่ง วาระ 1 ปีที่ 1 (1/1)</option>
+                  <option value="1-2">เคยดำรงตำแหน่ง วาระ 1 ปีที่ 2 (1/2)</option>
+                  <option value="2-1">เคยดำรงตำแหน่ง วาระ 2 ปีที่ 1 (2/1)</option>
+                  <option value="2-2">เคยดำรงตำแหน่ง วาระ 2 ปีที่ 2 (2/2) - (อยู่ครบ 2 วาระติดต่อกัน)</option>
+                </select>
+              </div>
+              
+              <div class="grid-cols-2" id="sim-history-fields" style="gap: 1rem; display: none;">
+                <div class="form-group">
+                  <label for="form-sim-last-start">วันที่เริ่มวาระล่าสุด:</label>
+                  <input type="date" id="form-sim-last-start" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="form-sim-last-end">วันที่พ้นตำแหน่งล่าสุด:</label>
+                  <input type="date" id="form-sim-last-end" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-group" id="sim-exit-reason-field" style="display: none;">
+                <label for="form-sim-exit-reason">เหตุผลที่พ้นตำแหน่งล่าสุด:</label>
+                <select id="form-sim-exit-reason">
+                  <option value="term_end">พ้นสภาพตามวาระปกติ (Term End)</option>
+                  <option value="resigned">ลาออกระหว่างวาระ (Resigned)</option>
+                  <option value="lottery">จับฉลากออก (Lottery)</option>
+                </select>
+              </div>
+
+              <h3 style="color: #A5B4FC; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 1rem;">2. ข้อมูลการสมัคร / การคัดเลือกครั้งใหม่</h3>
+              
+              <div class="grid-cols-2" style="gap: 1rem;">
+                <div class="form-group">
+                  <label for="form-sim-target-pos">ตำแหน่งที่สมัคร:</label>
+                  <select id="form-sim-target-pos">
+                    <option value="director">กรรมการดำเนินการ</option>
+                    <option value="chair">ประธานกรรมการ</option>
+                    <option value="auditor">ผู้ตรวจสอบกิจการ</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="form-sim-election-date">วันที่เลือกตั้งใหม่:</label>
+                  <input type="date" id="form-sim-election-date" class="form-control">
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="form-sim-entry-type">รูปแบบการเข้าสู่ตำแหน่ง:</label>
+                <select id="form-sim-entry-type">
+                  <option value="regular">เลือกตั้งทั่วไปรอบปกติ (Regular)</option>
+                  <option value="vacancy">เข้าแทนตำแหน่งที่ว่างลงก่อนกำหนด (Replace Vacancy)</option>
+                </select>
+              </div>
+
+              <div class="grid-cols-2" id="sim-vacancy-fields" style="gap: 1rem; display: none;">
+                <div class="form-group">
+                  <label for="form-sim-predecessor-start">วันเริ่มวาระของคนเดิมที่ว่างลง:</label>
+                  <input type="date" id="form-sim-predecessor-start" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="form-sim-predecessor-term">วาระเดิมของโควตาที่ว่างลง:</label>
+                  <select id="form-sim-predecessor-term">
+                    <option value="1-1">1 ปีที่ 1 (1/1)</option>
+                    <option value="1-2">1 ปีที่ 2 (1/2)</option>
+                    <option value="2-1">2 ปีที่ 1 (2/1)</option>
+                    <option value="2-2">2 ปีที่ 2 (2/2)</option>
+                  </select>
+                </div>
+              </div>
+
+              <h3 style="color: #A5B4FC; font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem;">3. เงื่อนไขและข้อบังคับพิเศษ</h3>
+              
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+                  <input type="checkbox" id="form-sim-chair-resign" checked>
+                  ข้อบังคับระบุให้ "ต้องลาออกจากตำแหน่งเดิมก่อนสมัครประธาน"
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+                  <input type="checkbox" id="form-sim-same-year">
+                  เป็นการลาออกและกลับเข้ามาดำรงตำแหน่งในปีเดียวกัน (Same Year Return)
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+                  <input type="checkbox" id="form-sim-covid">
+                  มีประกาศระงับการจัดประชุม (เช่น COVID-19) ในช่วงที่พ้นสภาพล่าสุด
+                </label>
+              </div>
+
+              <button class="btn btn-primary" id="btn-run-individual-sim" style="width: 100%; font-size: 1rem; padding: 0.9rem;">
+                🎯 วิเคราะห์และประมวลผลวาระ
+              </button>
+            </div>
+
+            <!-- Column 2: Results -->
+            <div style="background-color: rgba(17, 24, 39, 0.4); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+              <div>
+                <h3 style="color: #A5B4FC; font-size: 1.1rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                  📊 ผลการวิเคราะห์วาระจำลอง
+                </h3>
+                
+                <div style="text-align: center; margin: 2rem 0;" id="sim-result-outcome-container">
+                  <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">สถานะสิทธิ์สมัคร</div>
+                  <div id="sim-result-eligible-badge" style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1.5rem;">
+                    -- กรุณากดปุ่มเพื่อจำลอง --
+                  </div>
+                  <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">วาระที่จะได้รับหากได้รับเลือกตั้ง</div>
+                  <div id="sim-result-term-badge-container">
+                    <span id="sim-result-term-badge" class="badge badge-waive" style="font-size: 1.5rem; padding: 0.5rem 1.5rem; height: auto; border-radius: 0.5rem;">N/A</span>
+                  </div>
+                </div>
+
+                <div style="background-color: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1rem; margin-top: 1rem;">
+                  <h4 style="font-size: 0.9rem; color: #FFF; margin-bottom: 0.5rem;">ชี้แจงเหตุผลและข้อกำหนดตามกฎหมาย:</h4>
+                  <p id="sim-result-explanation" style="font-size: 0.875rem; color: var(--text-secondary); line-height: 1.6;">
+                    ระบบจะนำข้อมูลที่คุณกรอกมาเปรียบเทียบกับพระราชบัญญัติสหกรณ์ พ.ศ. 2542 มาตรา 50 และระเบียบนายทะเบียนสหกรณ์ เพื่อหาผลลัพธ์ทางกฎหมายโดยละเอียด
+                  </p>
+                </div>
+              </div>
+              
+              <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                *หมายเหตุ: เป็นระบบประมวลผลแบบ What-if สำหรับจำลองสถานการณ์เท่านั้น ข้อมูลจะไม่ถูกบันทึกลงในทะเบียนจริงของสหกรณ์
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="grid-cols-3" style="gap: 2rem; margin-bottom: 2rem;">
           <!-- Resign All card -->
           <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
