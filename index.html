@@ -3,587 +3,766 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' data: https://fonts.gstatic.com; connect-src https://script.google.com https://script.googleusercontent.com; frame-src 'none'; object-src 'none';">
-  <meta name="description" content="ระบบตรวจสอบวาระการดำรงตำแหน่งกรรมการดำเนินการสหกรณ์ ตามพ.ร.บ. สหกรณ์ และข้อบงคับมาตรฐาน">
-  <title>ระบบตรวจสอบวาระกรรมการสหกรณ์</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%232c3e50'/><text x='50' y='65' font-family='Arial' font-size='50' font-weight='bold' fill='%233498db' text-anchor='middle'>CB</text></svg>">
+  <title>ระบบทะเบียนและนับวาระกรรมการดำเนินการสหกรณ์</title>
+  <!-- SEO & Meta Tags -->
+  <meta name="description" content="ระบบจัดการฐานข้อมูล คำนวณวาระการดำรงตำแหน่ง และตรวจสอบสิทธิ์กรรมการสหกรณ์ ตาม พ.ร.บ. สหกรณ์ พ.ศ. 2542 มาตรา 50">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="container">
-    <!-- Header Section -->
-    <header id="app-header">
-      <div>
-        <h1><span class="header-dot">●</span> COOP_BOARD_VALIDATOR</h1>
-        <p>ระบบตรวจสอบวาระกรรมการดำเนินการสหกรณ์</p>
+  <div class="app-container">
+    
+    <!-- Sidebar Menu -->
+    <aside class="sidebar">
+      <div class="brand">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #A855F7;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>BoardTerm Co-op</span>
       </div>
-      <div>
-        <p id="system-time-display"></p>
+      
+      <!-- API Connection Config inside Sidebar -->
+      <div style="margin: 0.5rem 0; padding: 0.5rem; background: rgba(255,255,255,0.03); border-radius: 0.5rem; border: 1px solid var(--border-color);">
+        <label style="font-size: 0.75rem; color: var(--text-secondary); display: block; margin-bottom: 0.25rem;">Apps Script Web App URL:</label>
+        <input type="text" id="api-url-input" class="form-control" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;" placeholder="ใช้ LocalStorage (ออฟไลน์)" value="https://script.google.com/macros/s/AKfycbzh_b1N1VnoEIm3GEmmz0oa47-J8omD2p5XqL3JDcEdtYjcHqYtw7SU7t4yAE6GI4q-/exec">
+        <button id="save-api-url" class="btn btn-primary" style="font-size: 0.7rem; padding: 0.2rem 0.5rem; width: 100%; margin-top: 0.25rem; font-weight: normal;">เชื่อมต่อ API</button>
       </div>
-    </header>
 
-    <!-- Global Controls Card -->
-    <section class="controls-card" id="global-controls">
-      <div class="form-group">
-        <label for="coop-select">เลือกสหกรณ์</label>
-        <select id="coop-select">
-          <option value="">-- กรุณาเลือกสหกรณ์ --</option>
+      <!-- Coop Selector in Sidebar -->
+      <div class="form-group" style="margin-bottom: 1rem;">
+        <label for="global-coop-select" style="font-size: 0.8rem; color: var(--text-secondary);">เลือกสหกรณ์หลัก:</label>
+        <select id="global-coop-select">
+          <!-- Options will be populated by JS -->
         </select>
       </div>
-      <div class="form-group">
-        <label for="year-select">ปีงบประมาณที่ตรวจสอบ</label>
-        <select id="year-select">
-          <!-- Populated by JS dynamically (e.g. 2565 to 2575) -->
-        </select>
-      </div>
-      <button class="btn" id="btn-refresh">รีเฟรชข้อมูล</button>
-      <button class="btn" id="btn-toggle-add-coop">เพิ่มสหกรณ์</button>
-      <button class="btn" id="btn-toggle-edit-coop" style="display: none;">แก้ไขการกำหนดค่า</button>
-      <button class="btn btn-danger" id="btn-delete-coop" style="display: none;">ลบสหกรณ์</button>
-    </section>
+      
+      <ul class="menu-list">
+        <li class="menu-item active" data-tab="dashboard-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          แดชบอร์ด
+        </li>
+        <li class="menu-item" data-tab="coops-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 21h18M3 10h18M5 6h14a2 2 0 012 2v13H3V8a2 2 0 012-2z"/></svg>
+          จัดการสหกรณ์
+        </li>
+        <li class="menu-item" data-tab="directors-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 7a4 4 0 100-8 4 4 0 000 8zm14 14v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+          ทะเบียนกรรมการ
+        </li>
+        <li class="menu-item" data-tab="election-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          บันทึกการเลือกตั้ง
+        </li>
+        <li class="menu-item" data-tab="checker-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          ตรวจสอบคุณสมบัติ
+        </li>
+        <li class="menu-item" data-tab="reports-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 17v-2m3 2v-4m3 2v-6m-9 9h12V5H6v12z"/></svg>
+          แบบรายงาน 536/2546
+        </li>
+        <li class="menu-item" data-tab="simulation-tab">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+          What-if Simulation
+        </li>
+        <li class="menu-item" data-tab="tests-tab" style="border-top: 1px solid var(--border-color); margin-top: auto; padding-top: 1rem; color: #10B981;">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          รัน 16 Test Cases (KM)
+        </li>
+      </ul>
+    </aside>
 
-    <!-- Add Cooperative Card (Hidden by default) -->
-    <section class="card" id="add-coop-card" style="display: none; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h2 class="card-title">➕ เพิ่มข้อมูลสหกรณ์</h2>
-      </div>
-      <form id="add-coop-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div class="form-group">
-          <label for="new-coop-id">เลขทะเบียนสหกรณ์ (รหัสสหกรณ์)</label>
-          <input type="text" id="new-coop-id" placeholder="ตัวอย่าง: ส.012345" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-name">ชื่อสหกรณ์</label>
-          <input type="text" id="new-coop-name" placeholder="ตัวอย่าง: สหกรณ์ออมทรัพย์... จำกัด" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-type">ประเภทสหกรณ์</label>
-          <input type="text" id="new-coop-type" placeholder="ตัวอย่าง: ออมทรัพย์" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-duration">ระยะเวลาวาระ (ปี)</label>
-          <input type="number" id="new-coop-duration" value="2" min="1" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-max-terms">จำนวนวาระติดต่อกันสูงสุด</label>
-          <input type="number" id="new-coop-max-terms" value="2" min="1" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-cooling">ระยะเวลาพักวาระ (จำนวนวาระ)</label>
-          <input type="number" id="new-coop-cooling" value="1" min="0" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-size">จำนวนกรรมการ (คน)</label>
-          <input type="number" id="new-coop-size" value="15" min="1" max="100" required>
-        </div>
-        <div class="form-group">
-          <label for="new-coop-fiscal-month">เดือนสิ้นสุดปีงบประมาณ</label>
-          <select id="new-coop-fiscal-month" required>
-            <option value="1">มกราคม</option>
-            <option value="2">กุมภาพันธ์</option>
-            <option value="3">มีนาคม</option>
-            <option value="4">เมษายน</option>
-            <option value="5">พฤษภาคม</option>
-            <option value="6">มิถุนายน</option>
-            <option value="7">กรกฎาคม</option>
-            <option value="8">สิงหาคม</option>
-            <option value="9">กันยายน</option>
-            <option value="10">ตุลาคม</option>
-            <option value="11">พฤศจิกายน</option>
-            <option value="12" selected>ธันวาคม</option>
-          </select>
-        </div>
-        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
-          <button type="submit" class="btn">บันทึกข้อมูลสหกรณ์</button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Edit Cooperative Card (Hidden by default) -->
-    <section class="card" id="edit-coop-card" style="display: none; margin-bottom: 2rem;">
-      <div class="card-header">
-        <h2 class="card-title">⚙️ แก้ไขข้อมูลสหกรณ์</h2>
-      </div>
-      <form id="edit-coop-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-        <div class="form-group">
-          <label for="edit-coop-id">เลขทะเบียนสหกรณ์ (รหัสสหกรณ์ - แก้ไขไม่ได้)</label>
-          <input type="text" id="edit-coop-id" disabled style="opacity: 0.6; cursor: not-allowed;">
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-name">ชื่อสหกรณ์</label>
-          <input type="text" id="edit-coop-name" placeholder="ตัวอย่าง: สหกรณ์ออมทรัพย์... จำกัด" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-type">ประเภทสหกรณ์</label>
-          <input type="text" id="edit-coop-type" placeholder="ตัวอย่าง: ออมทรัพย์" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-duration">ระยะเวลาวาระ (ปี)</label>
-          <input type="number" id="edit-coop-duration" min="1" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-max-terms">จำนวนวาระติดต่อกันสูงสุด</label>
-          <input type="number" id="edit-coop-max-terms" min="1" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-cooling">ระยะเวลาพักวาระ (จำนวนวาระ)</label>
-          <input type="number" id="edit-coop-cooling" min="0" max="10" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-size">จำนวนกรรมการ (คน)</label>
-          <input type="number" id="edit-coop-size" min="1" max="100" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-coop-fiscal-month">เดือนสิ้นสุดปีงบประมาณ</label>
-          <select id="edit-coop-fiscal-month" required>
-            <option value="1">มกราคม</option>
-            <option value="2">กุมภาพันธ์</option>
-            <option value="3">มีนาคม</option>
-            <option value="4">เมษายน</option>
-            <option value="5">พฤษภาคม</option>
-            <option value="6">มิถุนายน</option>
-            <option value="7">กรกฎาคม</option>
-            <option value="8">สิงหาคม</option>
-            <option value="9">กันยายน</option>
-            <option value="10">ตุลาคม</option>
-            <option value="11">พฤศจิกายน</option>
-            <option value="12">ธันวาคม</option>
-          </select>
-        </div>
-        <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-          <button type="button" class="btn" id="btn-cancel-edit-coop" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
-          <button type="submit" class="btn">บันทึกการแก้ไข</button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Main Views Container -->
-    <main id="main-content">
-      <!-- 1. Board View (Dashboard & Table) -->
-      <div id="view-board" class="view">
-        <!-- Stats Summary cards -->
-        <div class="stats-summary" id="board-stats">
-          <div class="stat-box valid">
-            <span class="stat-value" id="stat-valid-count">0</span>
-            <div class="stat-label"><span class="badge-dot valid"></span> ปกติ</div>
+    <!-- Main Content Panel -->
+    <main class="main-content">
+      
+      <!-- 1. TAB: Dashboard -->
+      <section id="dashboard-tab" class="tab-content active">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="db-coop-name">สรุปภาพรวมระบบสหกรณ์</h1>
+            <p>แดชบอร์ดสรุปวาระการดำรงตำแหน่งและแจ้งเตือนกรรมการดำเนินการ</p>
           </div>
-          <div class="stat-box warning">
-            <span class="stat-value" id="stat-warning-count">0</span>
-            <div class="stat-label"><span class="badge-dot warning"></span> ควรระวัง / วาระสุดท้าย</div>
+        </div>
+        
+        <div class="grid-cols-4" style="margin-bottom: 2rem;">
+          <div class="card widget green">
+            <div style="color: var(--text-secondary); font-size: 0.85rem;">กรรมการปัจจุบัน (Active)</div>
+            <div id="widget-active-count" class="widget-num">0 / 0</div>
           </div>
-          <div class="stat-box invalid">
-            <span class="stat-value" id="stat-invalid-count">0</span>
-            <div class="stat-label"><span class="badge-dot invalid"></span> ผิดปกติ / ขัดต่อข้อบังคับ</div>
+          <div class="card widget yellow">
+            <div style="color: var(--text-secondary); font-size: 0.85rem;">พ้นตำแหน่งในปีบัญชีนี้</div>
+            <div id="widget-expiring-count" class="widget-num">0</div>
+          </div>
+          <div class="card widget orange">
+            <div style="color: var(--text-secondary); font-size: 0.85rem;">อยู่ครบ 2 วาระ (ห้ามสมัครต่อ)</div>
+            <div id="widget-consecutive-count" class="widget-num">0</div>
+          </div>
+          <div class="card widget red">
+            <div style="color: var(--text-secondary); font-size: 0.85rem;">อยู่ระหว่างเว้นวรรค (Waiver)</div>
+            <div id="widget-waiver-count" class="widget-num">0</div>
           </div>
         </div>
 
-        <!-- Add Member Card (Hidden by default) -->
-        <section class="card" id="add-member-card" style="display: none; margin-bottom: 2rem;">
-          <div class="card-header">
-            <h2 class="card-title">👤 เพิ่มรายชื่อคณะกรรมการ</h2>
+        <div class="grid-cols-2">
+          <!-- Expiring Alert List -->
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span style="color: var(--term-1-2);">⚠️</span> กรรมการใกล้หมดวาระ
+            </h3>
+            <div id="db-expiring-list" class="table-container" style="max-height: 250px; overflow-y: auto;">
+              <!-- Table of expiring directors -->
+              <table style="font-size: 0.85rem;">
+                <thead>
+                  <tr>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>วาระ</th>
+                    <th>วันหมดวาระ</th>
+                  </tr>
+                </thead>
+                <tbody id="db-expiring-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">ไม่มีรายการใกล้หมดวาระ</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <form id="add-member-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+
+          <!-- Active Board list with badge -->
+          <div class="card">
+            <h3 style="margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+              📋 รายชื่อคณะกรรมการบริหารชุดปัจจุบัน
+            </h3>
+            <div id="db-board-list" class="table-container" style="max-height: 250px; overflow-y: auto;">
+              <table style="font-size: 0.85rem;">
+                <thead>
+                  <tr>
+                    <th>ชื่อ-นามสกุล</th>
+                    <th>ตำแหน่ง</th>
+                    <th>วาระ</th>
+                  </tr>
+                </thead>
+                <tbody id="db-board-tbody">
+                  <tr><td colspan="3" style="text-align: center; color: var(--text-muted);">ไม่มีข้อมูลกรรมการในตำแหน่ง</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. TAB: Cooperatives Manager -->
+      <section id="coops-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>จัดการข้อมูลสหกรณ์</h1>
+            <p>เพิ่ม แก้ไข หรือเลือกสหกรณ์ในความรับผิดชอบ</p>
+          </div>
+          <button class="btn btn-primary" id="btn-add-coop">+ เพิ่มสหกรณ์ใหม่</button>
+        </div>
+
+        <!-- Co-op Form Card (Hidden by default) -->
+        <div class="card" id="coop-form-card" style="display: none; margin-bottom: 2rem;">
+          <h3 id="coop-form-title" style="margin-bottom: 1.25rem;">ข้อมูลสหกรณ์</h3>
+          <input type="hidden" id="coop-id">
+          
+          <div class="grid-cols-2">
             <div class="form-group">
-              <label for="new-member-id">รหัสสมาชิก/ทะเบียนสมาชิก</label>
-              <input type="text" id="new-member-id" placeholder="ระบบจะสร้างให้อัตโนมัติหากเว้นว่างไว้">
+              <label for="coop-name">ชื่อสหกรณ์:</label>
+              <input type="text" id="coop-name" class="form-control" placeholder="เช่น สหกรณ์ออมทรัพย์ครู จำกัด">
+              <div class="error-msg" id="err-coop-name"></div>
             </div>
             <div class="form-group">
-              <label for="new-member-name">ชื่อ-นามสกุล</label>
-              <input type="text" id="new-member-name" placeholder="ตัวอย่าง: นายสมหมาย มีสุข" required>
+              <label for="coop-type">ประเภทสหกรณ์:</label>
+              <select id="coop-type">
+                <option value="savings">ออมทรัพย์</option>
+                <option value="agriculture">การเกษตร</option>
+                <option value="fishery">ประมง</option>
+                <option value="housing">เคหสถาน</option>
+                <option value="consumer">บริโภค</option>
+                <option value="service">บริการ</option>
+                <option value="credit_union">เครดิตยูเนี่ยน</option>
+                <option value="federation">ชุมนุมสหกรณ์</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-cols-3">
+            <div class="form-group">
+              <label for="coop-reg">เลขทะเบียน:</label>
+              <input type="text" id="coop-reg" class="form-control" placeholder="เลขทะเบียนจดทะเบียน">
             </div>
             <div class="form-group">
-              <label for="new-member-position">ตำแหน่ง</label>
-              <select id="new-member-position" required>
-                <option value="ประธานกรรมการ">ประธานกรรมการ</option>
-                <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
-                <option value="เลขานุการ">เลขานุการ</option>
-                <option value="เหรัญญิก">เหรัญญิก</option>
-                <option value="กรรมการ">กรรมการ</option>
+              <label for="coop-fiscal">เดือนเริ่มต้นปีบัญชี:</label>
+              <select id="coop-fiscal">
+                <option value="1">มกราคม</option>
+                <option value="2">กุมภาพันธ์</option>
+                <option value="3">มีนาคม</option>
+                <option value="4">เมษายน</option>
+                <option value="5">พฤษภาคม</option>
+                <option value="6">มิถุนายน</option>
+                <option value="7">กรกฎาคม</option>
+                <option value="8">สิงหาคม</option>
+                <option value="9">กันยายน</option>
+                <option value="10">ตุลาคม</option>
+                <option value="11">พฤศจิกายน</option>
+                <option value="12">ธันวาคม</option>
               </select>
             </div>
             <div class="form-group">
-              <label for="new-member-term">วาระที่ (term_number)</label>
-              <input type="number" id="new-member-term" value="1" min="1" max="20" required>
+              <label for="coop-max">จำนวนกรรมการสูงสุด (ม.50 สูงสุด 15 คน):</label>
+              <input type="number" id="coop-max" class="form-control" value="15" min="1" max="15">
+              <div class="error-msg" id="err-coop-max"></div>
             </div>
-            <div class="form-group">
-              <label for="new-member-year-in-term">ปีในวาระ (year_in_term)</label>
-              <input type="number" id="new-member-year-in-term" value="1" min="1" max="10" required>
-            </div>
-            <div class="form-group">
-              <label for="new-member-start">ปีที่เริ่มวาระ (พ.ศ.)</label>
-              <input type="number" id="new-member-start" min="2400" max="2700" placeholder="ตัวอย่าง: 2567" required>
-            </div>
-            <div class="form-group">
-              <label for="new-member-end">ปีที่สิ้นสุดวาระ (คาดการณ์) (พ.ศ.)</label>
-              <input type="number" id="new-member-end" min="2400" max="2700" placeholder="ตัวอย่าง: 2568" required>
-            </div>
-            <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
-              <input type="checkbox" id="new-member-by-election" style="width: auto; height: 18px; cursor: pointer;">
-              <label for="new-member-by-election" style="margin: 0; cursor: pointer;">เป็นการเลือกตั้งซ่อม (By-election)</label>
-            </div>
-            <div class="form-group" style="grid-column: 1 / -1; margin-top: -0.5rem; margin-bottom: 0.5rem;">
-              <small style="color: var(--text-secondary); font-size: 0.8rem; display: block; line-height: 1.4;">
-                💡 *หมายเหตุ: ปีเริ่มวาระและปีสิ้นสุดวาระสามารถปรับเปลี่ยนได้ตามปีจริงของแต่ละวาระ (ระบบคำนวณปีสิ้นสุดวาระให้เป็นค่าเริ่มต้นเท่านั้น)*
-              </small>
-            </div>
-            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
-              <button type="submit" class="btn">บันทึกรายชื่อกรรมการ</button>
-            </div>
-          </form>
-        </section>
-
-        <!-- Board-Level Validation Card -->
-        <div class="card" id="board-validation-card" style="margin-bottom: 2rem; display: none;">
-          <div class="card-header">
-            <h2 class="card-title">🛡️ ผลการตรวจสอบระดับคณะกรรมการ (Board-Level)</h2>
           </div>
-          <div class="rule-list" id="board-rules-list">
-            <!-- Dynamically populated board-level rules -->
+
+          <!-- Bylaw Config -->
+          <div style="border-top: 1px solid var(--border-color); padding-top: 1rem; margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.75rem;">ตั้งค่าเพิ่มเติมในข้อบังคับเฉพาะสหกรณ์</h4>
+            <div class="grid-cols-2">
+              <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem; height: 100%;">
+                <input type="checkbox" id="coop-bylaw-chair-resign" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+                <label for="coop-bylaw-chair-resign" style="margin-bottom: 0; cursor: pointer;">ผู้ที่จะสมัครเป็นประธานต้องลาออกจากตำแหน่งเดิมก่อน (กรณี 2/3a)</label>
+              </div>
+              <div class="form-group">
+                <label for="coop-bylaw-gap-years">จำนวนปีเว้นวรรคเพื่อสมัครเป็นผู้ตรวจสอบกิจการ (ปีบัญชี - กรณี 1):</label>
+                <input type="number" id="coop-bylaw-gap-years" class="form-control" value="2" min="0">
+              </div>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button class="btn btn-primary" id="btn-save-coop">บันทึกข้อมูล</button>
+            <button class="btn btn-secondary" id="btn-cancel-coop">ยกเลิก</button>
           </div>
         </div>
 
-        <!-- Board Table Card -->
-        <div class="card" id="board-table-card">
-          <div class="card-header">
-            <h2 class="card-title">รายชื่อคณะกรรมการสหกรณ์</h2>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-              <span class="detail-label" id="board-title-label"></span>
-              <button class="btn" id="btn-toggle-add-member" style="display: none; padding: 0.3rem 1rem; font-size: 0.8rem; align-self: center;">เพิ่มกรรมการ</button>
-            </div>
-          </div>
-          <div style="overflow-x: auto;">
-            <table id="board-table">
+        <!-- Co-op List Table -->
+        <div class="card">
+          <div class="table-container">
+            <table>
               <thead>
                 <tr>
-                  <th>รหัสสมาชิก</th>
-                  <th>ชื่อ-นามสกุล</th>
-                  <th>ตำแหน่ง</th>
-                  <th>วาระปัจจุบัน</th>
-                  <th>สถานะการประเมิน</th>
-                  <th>การดำเนินการ</th>
+                  <th>ชื่อสหกรณ์</th>
+                  <th>ประเภท</th>
+                  <th>เลขทะเบียน</th>
+                  <th>เดือนเริ่มปีบัญชี</th>
+                  <th>กรรมการสูงสุด</th>
+                  <th>การจัดการ</th>
                 </tr>
               </thead>
-              <tbody id="board-table-body">
-                <!-- Dynamically loaded rows -->
-                <tr>
-                  <td colspan="6" style="text-align: center; color: var(--text-secondary);">กรุณาเลือกสหกรณ์และปีปฏิทินที่ต้องการตรวจสอบ</td>
-                </tr>
+              <tbody id="coops-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">กำลังโหลดข้อมูล...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-      </div>
+      </section>
 
-      <!-- 2. Member Detail View -->
-      <div id="view-member" class="view" style="display: none;">
-        <div class="action-bar">
-          <a href="#/" class="btn" id="btn-back-to-board">← กลับหน้าตารางบอร์ด</a>
-          <button class="btn" id="btn-toggle-edit-member">📝 แก้ไขข้อมูลสมาชิก</button>
-          <button class="btn btn-danger" id="btn-delete-member">ลบสมาชิก</button>
-          <button class="btn" id="btn-print-memo">🖨 พิมพ์บันทึกข้อความ</button>
+      <!-- 3. TAB: Directors Directory -->
+      <section id="directors-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1 id="directors-coop-title">ทะเบียนกรรมการดำเนินการ</h1>
+            <p>ตรวจสอบรายละเอียดประวัติ วาระการเป็นกรรมการ และเว้นวรรค</p>
+          </div>
+          <button class="btn btn-primary" id="btn-add-director">+ เพิ่มทะเบียนกรรมการใหม่</button>
         </div>
 
-        <!-- Edit Member Card (Hidden by default) -->
-        <section class="card" id="edit-member-card" style="display: none; margin-top: 1.5rem;">
-          <div class="card-header">
-            <h2 class="card-title">📝 แก้ไขข้อมูลสมาชิก</h2>
-          </div>
-          <form id="edit-member-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <!-- Director Form Card -->
+        <div class="card" id="director-form-card" style="display: none; margin-bottom: 2rem;">
+          <h3 id="director-form-title" style="margin-bottom: 1.25rem;">ข้อมูลกรรมการ</h3>
+          <input type="hidden" id="director-id">
+          
+          <div class="grid-cols-2">
             <div class="form-group">
-              <label for="edit-member-name">ชื่อ-นามสกุล</label>
-              <input type="text" id="edit-member-name" required>
+              <label for="dir-name">ชื่อ-นามสกุล:</label>
+              <input type="text" id="dir-name" class="form-control" placeholder="เช่น นายสมชาย ดีใจ">
+              <div class="error-msg" id="err-dir-name"></div>
             </div>
             <div class="form-group">
-              <label for="edit-member-status">สถานะภาพสมาชิก</label>
-              <select id="edit-member-status" required>
-                <option value="active">ยังคงสมาชิกภาพอยู่ (Active)</option>
-                <option value="resigned">ลาออก (Resigned)</option>
-                <option value="expelled">ให้ออก/ขับออก (Expelled)</option>
+              <label for="dir-member-no">เลขทะเบียนสมาชิก:</label>
+              <input type="text" id="dir-member-no" class="form-control" placeholder="เลขสมาชิกสหกรณ์">
+            </div>
+          </div>
+
+          <div class="grid-cols-3">
+            <div class="form-group">
+              <label for="dir-id-card">เลขบัตรประชาชน (4 ตัวท้าย):</label>
+              <input type="text" id="dir-id-card" class="form-control" maxlength="4" placeholder="เช่น 1234">
+            </div>
+            <div class="form-group">
+              <label for="dir-phone">เบอร์โทรศัพท์:</label>
+              <input type="text" id="dir-phone" class="form-control" placeholder="เบอร์ติดต่อ">
+            </div>
+            <div class="form-group">
+              <label for="dir-status">สถานะสมาชิก/คณะกรรมการ:</label>
+              <select id="dir-status">
+                <option value="active">ปกติ (Active)</option>
+                <option value="inactive">พ้นจากตำแหน่งแล้ว (Inactive)</option>
+                <option value="suspended">เว้นวรรคอยู่ (Suspended)</option>
               </select>
             </div>
-            <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-              <button type="button" class="btn" id="btn-cancel-edit-member" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
-              <button type="submit" class="btn">บันทึกการแก้ไข</button>
-            </div>
-          </form>
-        </section>
-
-        <div class="card" style="margin-top: 1.5rem;">
-          <div class="card-header">
-            <h2 class="card-title">ข้อมูลส่วนบุคคลและตำแหน่ง</h2>
-            <span class="badge" id="member-overall-status">N/A</span>
           </div>
-          <div class="member-profile-grid">
+
+          <div class="grid-cols-2">
+            <div class="form-group" style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="checkbox" id="dir-is-auditor" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
+              <label for="dir-is-auditor" style="margin-bottom: 0; cursor: pointer;">ปัจจุบันดำรงตำแหน่งเป็นผู้ตรวจสอบกิจการ</label>
+            </div>
+            <div class="form-group">
+              <label for="dir-notes">หมายเหตุเพิ่มเติม:</label>
+              <input type="text" id="dir-notes" class="form-control" placeholder="เช่น ขาดคุณสมบัติตามมติศาล/คำร้องเรียน">
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <button class="btn btn-primary" id="btn-save-director">บันทึกข้อมูล</button>
+            <button class="btn btn-secondary" id="btn-cancel-director">ยกเลิก</button>
+          </div>
+        </div>
+
+        <!-- Selected Director Detail Card (History & Timeline & Manual Action) -->
+        <div class="card" id="director-detail-card" style="display: none; margin-bottom: 2rem; border-left: 4px solid var(--accent-color);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem;">
             <div>
-              <div class="detail-item">
-                <span class="detail-label">ชื่อ-นามสกุล</span>
-                <div class="detail-value" id="detail-full-name">-</div>
-              </div>
-              <div class="detail-item">
-                <span class="detail-label">ตำแหน่ง</span>
-                <div class="detail-value" id="detail-position">-</div>
+              <h2 id="detail-dir-name" style="font-size: 1.5rem; font-weight: 700;">ชื่อกรรมการ</h2>
+              <p id="detail-dir-sub" style="color: var(--text-secondary); font-size: 0.9rem;">ข้อมูลเลขทะเบียนสมาชิก</p>
+            </div>
+            <button class="btn btn-secondary" id="btn-close-detail" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">ปิดรายละเอียด</button>
+          </div>
+
+          <div class="grid-cols-2">
+            <!-- Timeline of Term Records -->
+            <div>
+              <h4 style="margin-bottom: 0.75rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem;">⏳ ไทม์ไลน์วาระการดำรงตำแหน่ง</h4>
+              <div id="detail-dir-timeline" class="timeline-track">
+                <!-- Nodes will be added dynamically -->
               </div>
             </div>
-            <div>
-              <div class="detail-item">
-                <span class="detail-label">ทะเบียนสมาชิก (Member ID)</span>
-                <div class="detail-value" id="detail-member-id" style="font-family: var(--font-mono);">-</div>
+
+            <!-- Manual term record adder for adjustments -->
+            <div style="background-color: rgba(0,0,0,0.15); padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--border-color);">
+              <h4 style="margin-bottom: 0.75rem; color: #A5B4FC;">✍️ จัดการประวัติวาระโดยตรง (Manual Adjustment)</h4>
+              <div class="form-group">
+                <label for="manual-term-no">วาระที่:</label>
+                <select id="manual-term-no">
+                  <option value="1">วาระที่ 1</option>
+                  <option value="2">วาระที่ 2</option>
+                </select>
               </div>
-              <div class="detail-item">
-                <span class="detail-label">สถานะภาพสมาชิก</span>
-                <div class="detail-value" id="detail-status">-</div>
+              <div class="form-group">
+                <label for="manual-year-no">ปีที่:</label>
+                <select id="manual-year-no">
+                  <option value="1">ปีที่ 1</option>
+                  <option value="2">ปีที่ 2</option>
+                </select>
               </div>
+              <div class="grid-cols-2">
+                <div class="form-group">
+                  <label for="manual-start-date">วันเริ่มดำรงตำแหน่ง:</label>
+                  <input type="date" id="manual-start-date" class="form-control">
+                </div>
+                <div class="form-group">
+                  <label for="manual-end-date">วันสิ้นสุด (ว่างไว้หากยังทำหน้าที่อยู่):</label>
+                  <input type="date" id="manual-end-date" class="form-control">
+                </div>
+              </div>
+              <div class="grid-cols-2">
+                <div class="form-group">
+                  <label for="manual-entry-type">ประเภทการเข้ารับตำแหน่ง:</label>
+                  <select id="manual-entry-type">
+                    <option value="initial">วาระเริ่มแรก (จัดตั้งสหกรณ์)</option>
+                    <option value="regular_election" selected>เลือกตั้งปกติประจำปี</option>
+                    <option value="by_election">เลือกตั้งซ่อม</option>
+                    <option value="replace_vacancy">แทนตำแหน่งว่างก่อนครบวาระ (มีผลตาม ม.50)</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="manual-exit-type">ประเภทการพ้นตำแหน่ง:</label>
+                  <select id="manual-exit-type">
+                    <option value="">(ยังทำหน้าที่อยู่)</option>
+                    <option value="term_end">พ้นตามวาระ (2 ปี)</option>
+                    <option value="resigned">ลาออก</option>
+                    <option value="lottery">จับฉลากออก (วาระเริ่มแรกเมื่อครบ 1 ปี)</option>
+                    <option value="disqualified">ขาดคุณสมบัติ (ยกเลิกมติ ม.20)</option>
+                    <option value="removed">ถูกถอดถอน</option>
+                    <option value="deceased">เสียชีวิต</option>
+                    <option value="lost_membership">ขาดสมาชิกภาพ</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="manual-position">ตำแหน่งหลัก:</label>
+                <select id="manual-position">
+                  <option value="director">กรรมการ</option>
+                  <option value="chair">ประธานกรรมการ</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" id="btn-save-manual-term" style="width:100%; margin-top:0.5rem;">บันทึกประวัติวาระ</button>
             </div>
           </div>
         </div>
 
-        <!-- Interactive Timeline -->
-        <div class="timeline-container">
-          <span class="detail-label">ประวัติลำดับวาระ (Timeline)</span>
-          <div class="timeline" id="member-timeline">
-            <!-- Dynamically populated timeline steps -->
+        <!-- Directors List Table -->
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>ทะเบียนสมาชิก</th>
+                  <th>เลขบัตร (ท้าย)</th>
+                  <th>สถานะ</th>
+                  <th>ผู้ตรวจสอบฯ</th>
+                  <th>วาระปัจจุบัน</th>
+                  <th>การจัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="directors-tbody">
+                <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">กรุณาเลือกสหกรณ์หลักด้านซ้ายก่อน</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. TAB: Record Election Events -->
+      <section id="election-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>บันทึกเหตุการณ์การประชุม/เลือกตั้ง</h1>
+            <p>บันทึกมติที่ประชุมใหญ่สามัญประจำปี (AGM) หรือวิสามัญ เพื่อสับเปลี่ยนหรือต่อวาระคณะกรรมการดำเนินการ</p>
           </div>
         </div>
 
-        <!-- Detailed Term Records List -->
-        <div class="card" id="term-records-card" style="margin-top: 1.5rem;">
-          <div class="card-header">
-            <h2 class="card-title">📋 รายการประวัติวาระการทำงาน</h2>
-            <button class="btn" id="btn-toggle-add-term" style="padding: 0.3rem 1rem; font-size: 0.8rem;">เพิ่มวาระประวัติ</button>
+        <div class="grid-cols-3" style="margin-bottom: 2rem;">
+          <!-- 4.1 Log New Election Event Form -->
+          <div class="card" style="grid-column: span 1;">
+            <h3 style="margin-bottom: 1.25rem; color: #A5B4FC;">📝 ข้อมูลวันจัดประชุมเลือกตั้ง</h3>
+            
+            <div class="form-group">
+              <label for="event-date">วันที่ประชุมใหญ่/เลือกตั้ง:</label>
+              <input type="date" id="event-date" class="form-control">
+              <div class="error-msg" id="err-event-date"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="event-type">ประเภทเหตุการณ์:</label>
+              <select id="event-type">
+                <option value="annual_general">ประชุมใหญ่สามัญประจำปี (เลือกตั้งประจำปี)</option>
+                <option value="extraordinary">ประชุมใหญ่วิสามัญ (เลือกตั้งทดแทน/เลือกใหม่ทั้งคณะ)</option>
+                <option value="initial_election">เลือกตั้งครั้งแรก (สหกรณ์จัดตั้งใหม่)</option>
+                <option value="lottery_draw">จับฉลากออกวาระแรกเริ่ม (เมื่อครบ 1 ปี)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="event-fiscal">ปีบัญชีที่ลงมติ (พ.ศ.):</label>
+              <input type="number" id="event-fiscal" class="form-control" placeholder="เช่น 2568">
+            </div>
+
+            <div class="form-group">
+              <label for="event-meeting-no">ครั้งที่ประชุมใหญ่:</label>
+              <input type="text" id="event-meeting-no" class="form-control" placeholder="เช่น 1/2568">
+            </div>
+
+            <div class="form-group">
+              <label for="event-note">บันทึกมติ/หมายเหตุ:</label>
+              <textarea id="event-note" placeholder="มติประชุม หรือข้อหารือเพิ่มเติม"></textarea>
+            </div>
+          </div>
+
+          <!-- 4.2 Select Action & Candidates in Election -->
+          <div class="card" style="grid-column: span 2;">
+            <h3 style="margin-bottom: 1.25rem; color: #A5B4FC;">🗳️ ประมวลผลคณะกรรมการและผู้สมัคร</h3>
+
+            <div id="lottery-draw-options" style="display: none; background-color: rgba(245,158,11,0.05); border: 1px solid var(--term-1-2); padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem;">
+              <h4 style="color: var(--term-1-2); margin-bottom: 0.5rem;">🎉 ฟังก์ชันจับฉลากออกกึ่งหนึ่ง (ม.50 วรรคสอง)</h4>
+              <p style="font-size: 0.85rem; margin-bottom: 1rem;">สำหรับสหกรณ์จัดตั้งใหม่เมื่อครบ 1 ปี ให้ระบุกรรมการที่ต้องออกจากตำแหน่งกึ่งหนึ่ง (ใช้วิธีสุ่ม/จับฉลาก)</p>
+              <button class="btn btn-secondary" id="btn-trigger-lottery-calc" style="color: var(--term-1-2);">สุ่มสิทธิ์จับฉลากออกโดยระบบ</button>
+            </div>
+
+            <div id="election-results-setup">
+              <h4 style="margin-bottom: 0.75rem;">1. ระบุกรรมการเดิมที่พ้นตำแหน่งจากเหตุการณ์นี้ (ลาออก/หมดวาระ)</h4>
+              <div id="exiting-directors-list" style="margin-bottom: 1.5rem; max-height: 150px; overflow-y: auto; border: 1px solid var(--border-color); padding: 0.5rem; border-radius: 0.5rem;">
+                <!-- Checkboxes will populate here -->
+                <p style="font-size:0.85rem; color: var(--text-muted);">กรุณาระบุวันประชุมก่อน...</p>
+              </div>
+
+              <h4 style="margin-bottom: 0.75rem;">2. เพิ่มผู้มีสิทธิ์ได้รับเลือกตั้งใหม่ (ทั้งคนเดิมสมัครต่อ หรือคนใหม่)</h4>
+              <div class="grid-cols-3" style="align-items: flex-end; margin-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="elect-dir-select">เลือกบุคคล:</label>
+                  <select id="elect-dir-select">
+                    <!-- Loaded by JS -->
+                  </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label for="elect-position">ตำแหน่งที่จะดำรง:</label>
+                  <select id="elect-position">
+                    <option value="director">กรรมการ</option>
+                    <option value="chair">ประธานกรรมการ</option>
+                  </select>
+                </div>
+                <button class="btn btn-secondary" id="btn-add-candidate-result">เพิ่มรายชื่อ</button>
+              </div>
+
+              <h4 style="margin-bottom: 0.5rem;">รายชื่อผู้ได้รับการเลือกตั้งและผลคะแนน (ใช้พิจารณาลำดับและวาระ):</h4>
+              <div class="table-container" style="max-height: 200px; overflow-y: auto; margin-bottom: 1.5rem;">
+                <table style="font-size: 0.85rem;">
+                  <thead>
+                    <tr>
+                      <th>ชื่อ-นามสกุล</th>
+                      <th>ตำแหน่ง</th>
+                      <th>ลำดับคะแนนโหวต</th>
+                      <th>ลบ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="candidates-tbody">
+                    <tr><td colspan="4" style="text-align: center; color: var(--text-muted);">ยังไม่มีผู้ได้รับการโหวตเลือกตั้ง</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+              <button class="btn btn-primary" id="btn-save-election">💾 บันทึกและประมวลผลวาระผู้ได้รับเลือกทั้งหมด</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History of Election Events Logged -->
+        <div class="card">
+          <h3 style="margin-bottom: 1rem;">ประวัติการเลือกตั้ง/เหตุการณ์ที่บันทึก</h3>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>วันที่ประชุม</th>
+                  <th>ประเภทเหตุการณ์</th>
+                  <th>ปีบัญชี</th>
+                  <th>ครั้งที่ประชุม</th>
+                  <th>บันทึกมติ</th>
+                </tr>
+              </thead>
+              <tbody id="events-tbody">
+                <tr><td colspan="5" style="text-align: center; color: var(--text-muted);">ไม่มีประวัติการเลือกตั้งที่บันทึกไว้</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. TAB: Eligibility Checker -->
+      <section id="checker-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>ตรวจสอบสิทธิ์สมัครรับเลือกตั้งคณะกรรมการ</h1>
+            <p>ประเมินคุณสมบัติเบื้องต้น สิทธิ์ในการสมัครประธาน/กรรมการ และวาระถัดไปตามกฎหมาย ม.50</p>
+          </div>
+        </div>
+
+        <div class="grid-cols-2">
+          <!-- Checker Form -->
+          <div class="card">
+            <h3 style="margin-bottom: 1.25rem;">🔍 ป้อนข้อมูลผู้สมัคร</h3>
+            
+            <div class="form-group">
+              <label for="check-dir-select">เลือกกรรมการผู้ต้องการสมัคร:</label>
+              <select id="check-dir-select">
+                <!-- Populated by JS -->
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="check-position">ตำแหน่งเป้าหมายที่ประสงค์สมัคร:</label>
+              <select id="check-position">
+                <option value="director">กรรมการดำเนินการ</option>
+                <option value="chair">ประธานกรรมการ</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="check-date">วันที่จะจัดการเลือกตั้ง (ที่ประชุมใหญ่):</label>
+              <input type="date" id="check-date" class="form-control">
+            </div>
+
+            <button class="btn btn-primary" id="btn-run-check" style="width: 100%; margin-top: 1rem;">เริ่มทำการตรวจสอบคุณสมบัติ</button>
+          </div>
+
+          <!-- Checker Results -->
+          <div class="card" id="check-result-card" style="border-left: 5px solid var(--text-muted); display: flex; flex-direction: column; justify-content: center;">
+            <div id="check-result-placeholder" style="text-align: center; color: var(--text-muted);">
+              <svg width="48" height="48" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin: 0 auto 1rem;"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              <p>กรุณากรอกข้อมูลและกดปุ่มด้านซ้ายเพื่อตรวจสอบคุณสมบัติ</p>
+            </div>
+            
+            <!-- Result details -->
+            <div id="check-result-display" style="display: none;">
+              <h2 id="check-res-name" style="margin-bottom: 0.5rem;">ชื่อผู้สมัคร</h2>
+              <div id="check-res-status" style="margin-bottom: 1.25rem;">
+                <!-- Eligible/Not eligible Badge -->
+              </div>
+              <div style="background-color: rgba(255,255,255,0.03); padding: 1.25rem; border-radius: 0.75rem; border: 1px solid var(--border-color); font-size: 0.95rem;">
+                <p style="margin-bottom: 0.5rem;"><strong>วาระถัดไปหากได้รับเลือก:</strong> <span id="check-res-next-term" class="badge">N/A</span></p>
+                <p style="margin-bottom: 0.5rem;"><strong>คำอธิบาย/เหตุผล:</strong></p>
+                <p id="check-res-detail" style="color: var(--text-secondary); line-height: 1.5;">-</p>
+                <div id="check-res-additional" style="margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); display: none;">
+                  <!-- Additional cooling off dates -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. TAB: Reports 536/2546 -->
+      <section id="reports-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>แบบรายงานวาระการดำรงตำแหน่งคณะกรรมการ</h1>
+            <p>ตามคำสั่งนายทะเบียนสหกรณ์ที่ 536/2546 เพื่อจัดส่งสำนักงานสหกรณ์จังหวัด</p>
+          </div>
+          <button class="btn btn-secondary" onclick="window.print();">🖨️ พิมพ์แบบรายงาน (Print / Save as PDF)</button>
+        </div>
+
+        <div class="card">
+          <div style="text-align: center; margin-bottom: 2rem;">
+            <h2 id="report-title-main" style="font-size: 1.25rem; font-weight: 700; color: #FFF;">แบบทะเบียนคณะกรรมการดำเนินการสหกรณ์</h2>
+            <p id="report-title-sub" style="font-size: 0.95rem; color: var(--text-secondary);">สหกรณ์ _____________________</p>
+          </div>
+
+          <div class="table-container">
+            <table id="coop-report-table">
+              <thead>
+                <tr>
+                  <th rowspan="2" style="text-align: center; width: 60px;">ที่</th>
+                  <th rowspan="2">ชื่อ - สกุล</th>
+                  <th rowspan="2">ตำแหน่ง</th>
+                  <th colspan="2" style="text-align: center; border-bottom: 1px solid var(--border-color);">วาระที่ 1</th>
+                  <th colspan="2" style="text-align: center; border-bottom: 1px solid var(--border-color);">วาระที่ 2</th>
+                  <th rowspan="2">วันได้รับเลือกตั้ง</th>
+                  <th rowspan="2">พ้นตำแหน่งด้วยเหตุใด / วันที่พ้น</th>
+                  <th rowspan="2">หมายเหตุ</th>
+                </tr>
+                <tr>
+                  <th style="text-align: center; width: 80px;">ปีที่ 1</th>
+                  <th style="text-align: center; width: 80px;">ปีที่ 2</th>
+                  <th style="text-align: center; width: 80px;">ปีที่ 1</th>
+                  <th style="text-align: center; width: 80px;">ปีที่ 2</th>
+                </tr>
+              </thead>
+              <tbody id="report-tbody">
+                <!-- Populated by JS -->
+                <tr><td colspan="10" style="text-align: center; color: var(--text-muted);">ไม่มีข้อมูลรายงานสำหรับสหกรณ์ที่เลือก</td></tr>
+              </tbody>
+            </table>
           </div>
           
-          <!-- Add Term Record Form (Hidden by default) -->
-          <div id="add-term-form-container" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255,255,255,0.01);">
-            <h3 style="font-family: var(--font-mono); font-size: 1rem; margin-bottom: 1rem; color: var(--accent-color);">➕ เพิ่มประวัติวาระใหม่</h3>
-            <form id="add-term-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <div class="form-group">
-                <label for="add-term-number">วาระที่</label>
-                <input type="number" id="add-term-number" min="1" max="20" required>
-              </div>
-              <div class="form-group">
-                <label for="add-term-year">ปีในวาระ</label>
-                <input type="number" id="add-term-year" min="1" max="10" required>
-              </div>
-              <div class="form-group">
-                <label for="add-term-position">ตำแหน่งหน้าที่</label>
-                <select id="add-term-position" required>
-                  <option value="ประธานกรรมการ">ประธานกรรมการ</option>
-                  <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
-                  <option value="เลขานุการ">เลขานุการ</option>
-                  <option value="เหรัญญิก">เหรัญญิก</option>
-                  <option value="กรรมการ">กรรมการ</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="add-term-start">ปีที่เริ่มต้นวาระ (พ.ศ.)</label>
-                <input type="number" id="add-term-start" min="2400" max="2700" placeholder="ตัวอย่าง: 2567" required>
-              </div>
-              <div class="form-group">
-                <label for="add-term-end-expected">ปีที่สิ้นสุดวาระคาดการณ์ (พ.ศ.)</label>
-                <input type="number" id="add-term-end-expected" min="2400" max="2700" placeholder="ตัวอย่าง: 2568" required>
-              </div>
-              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
-                <input type="checkbox" id="add-term-by-election" style="width: auto; height: 18px; cursor: pointer;">
-                <label for="add-term-by-election" style="margin: 0; cursor: pointer;">เป็นการเลือกตั้งซ่อม (By-election)</label>
-              </div>
-              <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                <button type="button" class="btn" id="btn-cancel-add-term" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
-                <button type="submit" class="btn">บันทึกวาระ</button>
-              </div>
-            </form>
+          <div style="margin-top: 3rem; display: flex; justify-content: flex-end; padding-right: 2rem;">
+            <div style="text-align: center; color: var(--text-secondary); font-size: 0.95rem;">
+              <p style="margin-bottom: 3.5rem;">ขอรับรองว่าข้อความในรายงานนี้ถูกต้องเป็นจริง</p>
+              <p>___________________________________________</p>
+              <p style="margin-top: 0.5rem;">( ประธานกรรมการ )</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. TAB: What-if Simulation -->
+      <section id="simulation-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>ตัวช่วยวิเคราะห์การสับเปลี่ยนชุดกรรมการ (What-if Simulation)</h1>
+            <p>จำลองผลกระทบต่อคณะกรรมการทั้งหมด หากเกิดเหตุการณ์จำลองต่างๆ ขึ้น</p>
+          </div>
+        </div>
+
+        <div class="grid-cols-3" style="gap: 2rem; margin-bottom: 2rem;">
+          <!-- Resign All card -->
+          <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 style="color: var(--term-2-1); margin-bottom: 0.5rem;">🚨 1. จำลอง "ลาออกทั้งคณะ"</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">หากคณะกรรมการชุดปัจจุบันยื่นลาออกพร้อมกันทั้งหมด (เช่นกรณีขัดแย้งหรือปรับเปลี่ยนโครงสร้าง) กฎหมายจะสับวาระใหม่อย่างไร</p>
+            </div>
+            <button class="btn btn-secondary" id="btn-sim-resign-all" style="margin-top: 1.5rem; width: 100%; border-color: var(--term-2-1); color: var(--term-2-1);">จำลองการลาออกทั้งคณะ</button>
           </div>
 
-          <!-- Edit Term Record Form (Hidden by default) -->
-          <div id="edit-term-form-container" style="display: none; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; background-color: rgba(255,255,255,0.01);">
-            <h3 style="font-family: var(--font-mono); font-size: 1rem; margin-bottom: 1rem; color: var(--accent-color);">⚙️ แก้ไขประวัติวาระการทำงาน</h3>
-            <form id="edit-term-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <input type="hidden" id="edit-term-old-number">
-              <input type="hidden" id="edit-term-old-year">
-              
-              <div class="form-group">
-                <label for="edit-term-number">วาระที่</label>
-                <input type="number" id="edit-term-number" min="1" max="20" required>
-              </div>
-              <div class="form-group">
-                <label for="edit-term-year">ปีในวาระ</label>
-                <input type="number" id="edit-term-year" min="1" max="10" required>
-              </div>
-              <div class="form-group">
-                <label for="edit-term-position">ตำแหน่งหน้าที่</label>
-                <select id="edit-term-position" required>
-                  <option value="ประธานกรรมการ">ประธานกรรมการ</option>
-                  <option value="รองประธานกรรมการ">รองประธานกรรมการ</option>
-                  <option value="เลขานุการ">เลขานุการ</option>
-                  <option value="เหรัญญิก">เหรัญญิก</option>
-                  <option value="กรรมการ">กรรมการ</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label for="edit-term-start">ปีที่เริ่มต้นวาระ (พ.ศ.)</label>
-                <input type="number" id="edit-term-start" min="2400" max="2700" required>
-              </div>
-              <div class="form-group">
-                <label for="edit-term-end-expected">ปีที่สิ้นสุดวาระคาดการณ์ (พ.ศ.)</label>
-                <input type="number" id="edit-term-end-expected" min="2400" max="2700" required>
-              </div>
-              <div class="form-group">
-                <label for="edit-term-end-actual">ปีที่พ้นตำแหน่งจริง (พ.ศ. - ถ้ามี)</label>
-                <input type="number" id="edit-term-end-actual" min="2400" max="2700" placeholder="ว่างไว้หากยังไม่พ้นวาระ">
-              </div>
-              <div class="form-group">
-                <label for="edit-term-exit-reason">สาเหตุการพ้นตำแหน่งก่อนกำหนด</label>
-                <select id="edit-term-exit-reason">
-                  <option value="">-- ดำรงตำแหน่งปกติ / ยังไม่พ้นตำแหน่ง --</option>
-                  <option value="resigned">ลาออกส่วนบุคคล (resigned)</option>
-                  <option value="resigned_whole_board">คณะกรรมการลาออกทั้งคณะ (resigned_whole_board)</option>
-                  <option value="removed">ให้ออก/พ้นตำแหน่งโดยคำสั่ง (removed)</option>
-                  <option value="disqualified">ขาดคุณสมบัติ (disqualified)</option>
-                  <option value="not_elected">ไม่ได้รับการเลือกตั้งในรอบถัดไป (not_elected)</option>
-                </select>
-              </div>
-              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
-                <input type="checkbox" id="edit-term-by-election" style="width: auto; height: 18px; cursor: pointer;">
-                <label for="edit-term-by-election" style="margin: 0; cursor: pointer;">เป็นการเลือกตั้งซ่อม</label>
-              </div>
-              <div class="form-group" style="display: flex; flex-direction: row; align-items: center; gap: 0.5rem; min-width: 200px; padding-top: 1.5rem;">
-                <input type="checkbox" id="edit-term-elected" style="width: auto; height: 18px; cursor: pointer;" checked>
-                <label for="edit-term-elected" style="margin: 0; cursor: pointer;">ผ่านการเลือกตั้ง/แต่งตั้งเสร็จสมบูรณ์</label>
-              </div>
-              <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
-                <button type="button" class="btn" id="btn-cancel-edit-term" style="border-color: var(--text-secondary); color: var(--text-secondary);">ยกเลิก</button>
-                <button type="submit" class="btn">บันทึกการแก้ไขวาระ</button>
-              </div>
-            </form>
+          <!-- Initial Lottery Draw card -->
+          <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 style="color: var(--term-1-2); margin-bottom: 0.5rem;">🎲 2. จำลอง "สุ่มจับฉลากออกกึ่งหนึ่ง"</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">สำหรับสหกรณ์ที่เพิ่งจัดตั้งขึ้นมาใหม่ เมื่อครบกำหนด 1 ปีบัญชีแรกตามมาตรา 50 วรรคสอง คณะกรรมการกึ่งหนึ่งใดจะต้องจับฉลากออกบ้าง</p>
+            </div>
+            <button class="btn btn-secondary" id="btn-sim-lottery" style="margin-top: 1.5rem; width: 100%; border-color: var(--term-1-2); color: var(--term-1-2);">จำลองการสุ่มจับฉลากออก</button>
           </div>
 
-          <div style="overflow-x: auto;">
-            <table id="member-terms-table">
+          <!-- Redefining board maximum -->
+          <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 style="color: var(--term-1-1); margin-bottom: 0.5rem;">📏 3. จำลอง "แก้ไขจำนวนกรรมการสูงสุด"</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5;">จำลองหากสหกรณ์แก้ไขเพิ่มเติมข้อบังคับ ลดหรือเพิ่มสัดส่วนคณะกรรมการ (เช่น จาก 15 คน เหลือ 11 คน หรือสลับกัน) เพื่อพิจารณาบทเฉพาะกาล</p>
+              <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 0;">
+                <label for="sim-new-max">จำนวนกรรมการที่ต้องการปรับเปลี่ยนเป็น:</label>
+                <input type="number" id="sim-new-max" class="form-control" value="11" min="1" max="15" style="padding: 0.4rem; font-size: 0.85rem;">
+              </div>
+            </div>
+            <button class="btn btn-secondary" id="btn-sim-max-change" style="margin-top: 1rem; width: 100%; border-color: var(--term-1-1); color: var(--term-1-1);">จำลองผลบทเฉพาะกาล</button>
+          </div>
+        </div>
+
+        <!-- Simulation Results Output -->
+        <div class="card" id="sim-results-card" style="display: none;">
+          <h3 id="sim-results-title" style="margin-bottom: 1.25rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">ผลลัพธ์จากการจำลองสถานการณ์</h3>
+          <div class="table-container">
+            <table>
               <thead>
                 <tr>
-                  <th>วาระ/ปี</th>
-                  <th>ตำแหน่ง</th>
-                  <th>ช่วงเวลา (พ.ศ.)</th>
-                  <th>พ้นตำแหน่งจริง (พ.ศ.)</th>
-                  <th>ประเภทการเข้า</th>
-                  <th>สาเหตุพ้นตำแหน่ง</th>
-                  <th>สถานะแต่งตั้ง</th>
-                  <th>การดำเนินการ</th>
+                  <th>ชื่อ-นามสกุล</th>
+                  <th>วาระปัจจุบัน</th>
+                  <th>สถานะจำลองหลังพ้น</th>
+                  <th>วาระถัดไปหากได้รับกลับเข้ามา</th>
+                  <th>คำชี้แจง / เหตุผล</th>
                 </tr>
               </thead>
-              <tbody id="member-terms-table-body">
-                <!-- Dynamically loaded rows -->
+              <tbody id="sim-results-tbody">
+                <!-- Dynamically populated -->
               </tbody>
             </table>
           </div>
         </div>
+      </section>
 
-        <!-- Rules Validation Card -->
+      <!-- 8. TAB: Auto Tests Runner (16 cases) -->
+      <section id="tests-tab" class="tab-content">
+        <div class="header-bar">
+          <div class="header-title">
+            <h1>ระบบทดสอบความสอดคล้อง (KM Test Case Runner)</h1>
+            <p>สืบค้นข้อมูลจำลองและประมวลผลสอบกลับ 16 กรณีศึกษาตามคู่มือจัดการความรู้ เพื่อให้สอดคล้องกับมาตรฐานทางกฎหมาย</p>
+          </div>
+          <button class="btn btn-primary" id="btn-run-all-tests">🚀 เริ่มรันการทดสอบทั้งหมด</button>
+        </div>
+
         <div class="card">
-          <div class="card-header">
-            <h2 class="card-title">ผลการตรวจสอบกฎหมายและข้อบังคับ</h2>
-          </div>
-          <div class="rule-list" id="member-rules-list">
-            <!-- Dynamically populated rules engine results -->
-          </div>
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
-            <div class="detail-item">
-              <span class="detail-label" style="color: var(--accent-color);">บทสรุปผลตรวจสอบ</span>
-              <div class="detail-value" id="detail-validation-summary" style="font-weight: 500; margin-top: 0.2rem;">-</div>
-            </div>
-            <div class="detail-item" style="margin-top: 1rem;">
-              <span class="detail-label" style="color: var(--accent-color);">ข้อเสนอแนะเชิงกฎหมาย</span>
-              <div class="detail-value" id="detail-validation-recommendation" style="font-size: 0.95rem;">-</div>
-            </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 80px; text-align: center;">กรณีที่</th>
+                  <th>สถานการณ์ทดสอบ</th>
+                  <th>เป้าหมายที่คาดหวัง (Expected Output)</th>
+                  <th style="width: 150px; text-align: center;">ผลการทดสอบ</th>
+                  <th>ผลลัพธ์ประมวลผลจริง</th>
+                </tr>
+              </thead>
+              <tbody id="tests-tbody">
+                <!-- Cases 1-16 will be populated here -->
+              </tbody>
+            </table>
           </div>
         </div>
-      </div>
+      </section>
+
     </main>
-
-    <!-- Hidden Printable Official Memo Layout -->
-    <div class="print-memo" id="memo-print-layout">
-      <div class="memo-header">บันทึกข้อความสรุปผลตรวจสอบวาระกรรมสหกรณ์</div>
-      <div class="memo-details">
-        <strong>ส่วนราชการ:</strong> สำนักงานส่งเสริมสหกรณ์ / คณะผู้ตรวจสอบวาระกรรมการดำเนินการ<br>
-        <strong>ที่:</strong> - <br>
-        <strong>วันที่ตรวจสอบ:</strong> <span id="print-check-date">-</span><br>
-        <strong>เรื่อง:</strong> ผลการตรวจสอบคุณสมบัติและวาระการดำรงตำแหน่งของกรรมการดำเนินการสหกรณ์
-      </div>
-      <div class="memo-title">เรียน ประธานกรรมการ / คณะกรรมการตรวจสอบ</div>
-      <p style="font-size: 1.15rem; line-height: 1.8; text-indent: 1.5cm; margin-bottom: 1.5rem;">
-        ตามที่ได้รับมอบหมายให้ทำการประเมินและตรวจสอบวาระการดำรงตำแหน่งกรรมการดำเนินการ สหกรณ์จำกัด ประจำปีงบประมาณ <span id="print-target-year"></span> บัดนี้ คณะผู้ตรวจสอบได้ประเมินผลการตรวจสอบผ่านระบบประมวลกฎหมายสหกรณ์และข้อบังคับแล้ว มีรายงานสรุปดังต่อไปนี้:
-      </p>
-
-      <div style="margin-bottom: 2rem;">
-        <h3 style="font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 0.2rem; margin-bottom: 0.8rem;">1. ข้อมูลกรรมการผู้ถูกตรวจสอบ</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr>
-            <td style="width: 25%; font-weight: bold;">ชื่อ-สกุล:</td>
-            <td id="print-member-name">-</td>
-            <td style="width: 25%; font-weight: bold;">ทะเบียนสมาชิก:</td>
-            <td id="print-member-id-val">-</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">สหกรณ์ต้นสังกัด:</td>
-            <td id="print-coop-name">-</td>
-            <td style="font-weight: bold;">ตำแหน่งปัจจุบัน:</td>
-            <td id="print-member-position">-</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">วาระปัจจุบัน:</td>
-            <td id="print-member-label">-</td>
-            <td style="font-weight: bold;">สถานะสมาชิกภาพ:</td>
-            <td id="print-member-status">-</td>
-          </tr>
-        </table>
-      </div>
-
-      <div style="margin-bottom: 2rem;">
-        <h3 style="font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 0.2rem; margin-bottom: 0.8rem;">2. ผลการประเมินตามเกณฑ์กฎหมาย (พ.ร.บ. สหกรณ์)</h3>
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr>
-              <th style="width: 15%;">รหัสกฎ</th>
-              <th style="width: 50%;">ข้อกำหนดตามกฎหมาย</th>
-              <th style="width: 35%;">ผลการประเมิน</th>
-            </tr>
-          </thead>
-          <tbody id="print-rules-table-body">
-            <!-- Printed rules -->
-          </tbody>
-        </table>
-      </div>
-
-      <div style="margin-bottom: 2rem;">
-        <h3 style="font-size: 1.2rem; border-bottom: 1px solid #000000; padding-bottom: 0.2rem; margin-bottom: 0.8rem;">3. สรุปพิจารณาและข้อเสนอแนะ</h3>
-        <p style="font-size: 1.15rem; line-height: 1.8; font-weight: bold; margin-bottom: 0.5rem;">
-          สถานะผลตรวจสอบ: <span id="print-memo-status" style="text-decoration: underline;">-</span>
-        </p>
-        <p style="font-size: 1.1rem; line-height: 1.8; margin-bottom: 0.5rem;" id="print-memo-summary">
-          -
-        </p>
-        <p style="font-size: 1.1rem; line-height: 1.8; font-style: italic;" id="print-memo-recommendation">
-          -
-        </p>
-      </div>
-
-      <div style="margin-top: 4rem; display: flex; justify-content: flex-end;">
-        <div style="text-align: center; width: 250px; font-size: 1.1rem; line-height: 1.8;">
-          ลงชื่อ............................................................<br>
-          (............................................................)<br>
-          เจ้าหน้าที่ผู้ตรวจสอบ/ผู้จัดรายงาน
-        </div>
-      </div>
-    </div>
   </div>
 
-  <!-- Loading Overlay -->
-  <div class="loading-overlay" id="loading-spinner">
-    <div class="spinner"></div>
-    <p style="font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent-color);">LOADING_DATA...</p>
-  </div>
-
-  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
