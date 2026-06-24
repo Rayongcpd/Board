@@ -263,14 +263,40 @@ function computeNextTerm({ director, history, entryType, replacesTermRecord, eve
 
   // แทนตำแหน่งว่าง (R3) -> รับช่วงวาระที่เหลือของคนก่อนหน้า
   if (entryType === "replace_vacancy" && replacesTermRecord) {
-    return {
-      termNo: replacesTermRecord.termNo,
-      yearNo: replacesTermRecord.yearNo
-    };
+    let termNo = replacesTermRecord.termNo;
+    let yearNo = replacesTermRecord.yearNo;
+
+    // คำนวณปีที่เหลือ
+    if (replacesTermRecord.yearNo === 1) {
+      const diffDays = (new Date(eventDate) - new Date(replacesTermRecord.startDate)) / (1000 * 60 * 60 * 24);
+      if (diffDays > 180) {
+        yearNo = 2;
+      }
+    }
+
+    // ถ้านายคนนี้เคยดำรงตำแหน่งวาระนี้มาแล้ว (หรือสูงกว่า) ต้องขยับวาระขึ้น
+    if (lastRecord) {
+      if (lastRecord.termNo >= termNo) {
+        termNo = lastRecord.termNo + 1;
+      }
+    }
+
+    return { termNo, yearNo };
   }
 
   // คนใหม่แกะกล่อง
   if (!lastRecord) {
+    return { termNo: 1, yearNo: 1 };
+  }
+
+  // หากกำลังดำรงตำแหน่งอยู่ (ไม่ได้พ้นจากตำแหน่ง/ลาออก)
+  if (lastRecord.endDate === null) {
+    if (lastRecord.yearNo === 1) {
+      return { termNo: lastRecord.termNo, yearNo: 2 };
+    }
+    if (lastRecord.termNo === 1) {
+      return { termNo: 2, yearNo: 1 };
+    }
     return { termNo: 1, yearNo: 1 };
   }
 
@@ -1514,7 +1540,7 @@ function runMaxChangeSimulation(newMax) {
   const tr = document.createElement("tr");
   
   if (newMax < activeCount) {
-    const diff = activeCount - newMax;
+    const diff = Math.ceil(activeCount / 2) - Math.ceil(newMax / 2);
     tr.innerHTML = `
       <td colspan="5" style="color:var(--term-2-1); padding: 1.5rem; line-height: 1.6;">
         <strong>⚠️ คำอธิบายบทเฉพาะกาล (กรณีกรรมการลดลง ${activeCount} -> ${newMax} คน):</strong><br>
@@ -1888,7 +1914,7 @@ async function runKMTestSuite() {
         id: 13,
         title: "สลับตำแหน่งประธานและกรรมการ (กรณี 12)",
         expected: "นาย ก. -> 2/1, นาย ข. -> 1/2",
-        passed: nextA.termNo === 2 && nextA.yearNo === 1 && nextB.termNo === 1 && nextB.yearNo === 1, // B รับวาระปีที่เหลือ
+        passed: nextA.termNo === 2 && nextA.yearNo === 1 && nextB.termNo === 1 && nextB.yearNo === 2, // B รับวาระปีที่เหลือ
         actual: `ผลประมวลผล นาย ก.: ${nextA.termNo}/${nextA.yearNo}, นาย ข.: ${nextB.termNo}/${nextB.yearNo}`
       });
     }
@@ -1979,8 +2005,8 @@ async function runKMTestSuite() {
         id: 17,
         title: "นาย อ. ได้รับเลือกลำดับ 5 แทนตำแหน่งว่าง (กรณี 16)",
         expected: "ขึ้นวาระที่ 2 ปีที่ 2 (2/2)",
-        passed: nextO.termNo === 2 && nextO.yearNo === 1, // วาระพื้นฐานคำนวณเป็นวาระ 2 แต่ในการบรรจุจริงจะตกช่อง 2/2
-        actual: `ประมวลผลจริงได้วาระที่ 2 (และเข้าครองโควตาปีที่ 2 = 2/2)`
+        passed: nextO.termNo === 2 && nextO.yearNo === 2, // วาระพื้นฐานคำนวณเป็นวาระ 2 และตกช่อง 2/2
+        actual: `ผลประมวลผล นาย อ.: ${nextO.termNo}/${nextO.yearNo} (และเข้าครองโควตาปีที่ ${nextO.yearNo} = ${nextO.termNo}/${nextO.yearNo})`
       });
     }
 
@@ -2003,9 +2029,8 @@ async function runKMTestSuite() {
 
 // ช่วยทดสอบการคำนวณลดโควตาบอร์ด
 function runMaxChangeSimulationTest(oldMax, newMax) {
-  const activeCount = 15;
-  if (newMax < activeCount) {
-    const diff = activeCount - newMax;
+  if (newMax < oldMax) {
+    const diff = Math.ceil(oldMax / 2) - Math.ceil(newMax / 2);
     return `จับฉลากออกจำนวน ${diff} คนเพื่อลดขนาด`;
   }
   return `จับฉลากออกบางส่วนเพื่อเฉลี่ยสัดส่วนการหมดวาระ`;
