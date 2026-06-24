@@ -289,17 +289,6 @@ function computeNextTerm({ director, history, entryType, replacesTermRecord, eve
     return { termNo: 1, yearNo: 1 };
   }
 
-  // หากกำลังดำรงตำแหน่งอยู่ (ไม่ได้พ้นจากตำแหน่ง/ลาออก)
-  if (lastRecord.endDate === null) {
-    if (lastRecord.yearNo === 1) {
-      return { termNo: lastRecord.termNo, yearNo: 2 };
-    }
-    if (lastRecord.termNo === 1) {
-      return { termNo: 2, yearNo: 1 };
-    }
-    return { termNo: 1, yearNo: 1 };
-  }
-
   // ลาออกทั้งคณะ (R7 / กรณี 13)
   if (isResignAll) {
     if (lastRecord.termNo === 1) {
@@ -339,12 +328,18 @@ function checkEligibility(director, allRecords, electionDate, targetPosition, by
     if (targetPosition === "chair" && !bylaw.chairMustResignFirst) {
       const waiver = computeWaiverStatus(history, electionDate, bylaw);
       if (!waiver.isRequired || waiver.isComplete) {
-        const next = computeNextTerm({ director, history, entryType: "regular_election", eventDate: electionDate });
+        let nextTermNo = current.termNo;
+        let nextYearNo = current.yearNo + 1;
+        if (current.yearNo === 2) {
+          const next = computeNextTerm({ director, history, entryType: "regular_election", eventDate: electionDate });
+          nextTermNo = next.termNo;
+          nextYearNo = next.yearNo;
+        }
         return {
           eligible: true,
-          nextTermNo: next.termNo,
-          nextYearNo: next.yearNo,
-          label: `วาระที่ ${next.termNo} ปีที่ ${next.yearNo} (${next.termNo}/${next.yearNo})`,
+          nextTermNo,
+          nextYearNo,
+          label: `วาระที่ ${nextTermNo} ปีที่ ${nextYearNo} (${nextTermNo}/${nextYearNo})`,
           reason: "นับต่อจากตำแหน่งเดิมโดยไม่ต้องลาออกก่อนการเลือกตั้ง"
         };
       }
