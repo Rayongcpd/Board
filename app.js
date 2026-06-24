@@ -115,9 +115,6 @@ async function saveRecord(storeKey, record) {
 
 // ลบเรคคอร์ด
 async function deleteRecord(storeKey, id) {
-  state[storeKey] = state[storeKey].filter(item => item.id !== id);
-  saveToLocalStorageBackup();
-
   if (isApiConnected()) {
     try {
       const response = await fetch(state.apiUrl, {
@@ -132,11 +129,17 @@ async function deleteRecord(storeKey, id) {
       const res = await response.json();
       if (!res.success) {
         console.error("Failed to delete from Google Sheets:", res.error);
+        return false;
       }
     } catch (err) {
       console.error("API Connection error during delete:", err);
+      return false;
     }
   }
+  
+  // อัปเดต state และ local storage เมื่อลบจากชีตสำเร็จ (หรือกรณีออฟไลน์)
+  state[storeKey] = state[storeKey].filter(item => item.id !== id);
+  saveToLocalStorageBackup();
   return true;
 }
 
@@ -633,8 +636,12 @@ function editCoop(coop) {
 
 async function deleteCoop(id) {
   if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบสหกรณ์นี้? ข้อมูลกรรมการและวาระจะสูญหาย")) {
-    await deleteRecord("cooperatives", id);
-    // ลบประวัติอื่นๆ ที่พ่วงกัน
+    const success = await deleteRecord("cooperatives", id);
+    if (!success) {
+      alert("ไม่สามารถลบข้อมูลสหกรณ์จาก Google Sheets ได้ กรุณาตรวจสอบสิทธิ์และการเชื่อมต่อ API");
+      return;
+    }
+    // ลบประวัติอื่นๆ ที่พ่วงกันใน state
     state.directors = state.directors.filter(d => d.cooperativeId !== id);
     state.termRecords = state.termRecords.filter(t => t.cooperativeId !== id);
     state.electionEvents = state.electionEvents.filter(e => e.cooperativeId !== id);
@@ -818,7 +825,11 @@ function editDirector(d) {
 
 async function deleteDirector(id) {
   if (confirm("คุณแน่ใจที่จะลบข้อมูลกรรมการคนนี้? ประวัติการดำรงตำแหน่งจะถูกลบทั้งหมด")) {
-    await deleteRecord("directors", id);
+    const success = await deleteRecord("directors", id);
+    if (!success) {
+      alert("ไม่สามารถลบข้อมูลกรรมการจาก Google Sheets ได้ กรุณาตรวจสอบสิทธิ์และการเชื่อมต่อ API");
+      return;
+    }
     state.termRecords = state.termRecords.filter(t => t.directorId !== id);
     saveToLocalStorageBackup();
     alert("ลบข้อมูลกรรมการเรียบร้อย");
